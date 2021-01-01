@@ -5,6 +5,8 @@ import numpy as np
 import torch
 import albumentations as alb
 
+cv2.setNumThreads(0)
+
 
 class Compose:
     def __init__(self, transforms):
