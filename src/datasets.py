@@ -32,6 +32,9 @@ class RanzcrDataset(Dataset):
         if folds is not None:
             self.data = [s for s in self.data if s['fold'] in folds]
 
+    def __len__(self):
+        return len(self.data)
+
     def _set_random_seed(self, index):
         seed = int(time.time() * 1000.0) + index
         random.seed(seed)

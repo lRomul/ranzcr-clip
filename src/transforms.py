@@ -2,8 +2,8 @@ import cv2
 import random
 import numpy as np
 
-import torch
 import albumentations as alb
+import albumentations.pytorch
 
 cv2.setNumThreads(0)
 
@@ -54,14 +54,6 @@ class OneOf:
             return image, trg
 
 
-class ImageToTensor:
-    def __call__(self, image):
-        image = np.stack([image, image, image], axis=0)
-        image = image.astype(np.float32) / 256
-        image = torch.from_numpy(image)
-        return image
-
-
 class Albumentations:
     def __init__(self, transforms, p=1.0):
         self.albumentations = alb.Compose(transforms, p=p)
@@ -74,19 +66,15 @@ class Albumentations:
 
 def get_transforms(train: bool, size: int):
     if train:
-        transforms = Compose([
-            Albumentations([
-                alb.RandomResizedCrop(size, size),
-                alb.Normalize(mean=[0.485], std=[0.229])
-            ]),
-            ImageToTensor()
+        transforms = Albumentations([
+            alb.RandomResizedCrop(size, size),
+            alb.Normalize(mean=[0.485], std=[0.229]),
+            alb.pytorch.ToTensorV2()
         ])
     else:
-        transforms = Compose([
-            Albumentations([
-                alb.Resize(size, size),
-                alb.Normalize(mean=[0.485], std=[0.229])
-            ]),
-            ImageToTensor()
+        transforms = Albumentations([
+            alb.Resize(size, size),
+            alb.Normalize(mean=[0.485], std=[0.229]),
+            alb.pytorch.ToTensorV2()
         ])
     return transforms
