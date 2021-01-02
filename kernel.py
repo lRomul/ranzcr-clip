@@ -6,7 +6,7 @@ def run(command):
               f"export KERNEL_MODE=predict && " + command)
 
 
-run("pip install /kaggle/input/argus-birdsong-dataset/pytorch_argus-0.2.0-py3-none-any.whl")
-run("pip install /kaggle/input/argus-birdsong-dataset/timm-0.3.2-py3-none-any.whl")
+run("pip install /kaggle/input/ranzcr-clip/pytorch_argus-0.2.0-py3-none-any.whl")
+run("pip install /kaggle/input/ranzcr-clip/timm-0.3.2-py3-none-any.whl")
 
 run(f"python predict_kernel.py")
