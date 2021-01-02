@@ -68,6 +68,14 @@ def get_transforms(train: bool, size: int):
     if train:
         transforms = Albumentations([
             alb.RandomResizedCrop(size, size, scale=(0.8, 1.0)),
+            alb.HorizontalFlip(p=0.5),
+            alb.RandomBrightnessContrast(p=0.2, brightness_limit=(-0.2, 0.2),
+                                         contrast_limit=(-0.2, 0.2)),
+            alb.ShiftScaleRotate(p=0.2, shift_limit=0.0625,
+                                 scale_limit=0.2, rotate_limit=20),
+            alb.CoarseDropout(p=0.2),
+            alb.Cutout(p=0.2, max_h_size=16, max_w_size=16,
+                       fill_value=0., num_holes=16),
             alb.Normalize(mean=[0.485], std=[0.229]),
             alb.pytorch.ToTensorV2()
         ])
