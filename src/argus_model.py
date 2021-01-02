@@ -9,6 +9,7 @@ class RanzcrModel(argus.Model):
     nn_module = {
         "timm": timm.create_model
     }
+    prediction_transform = torch.nn.Sigmoid
 
     def __init__(self, params: dict):
         super().__init__(params)

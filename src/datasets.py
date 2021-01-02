@@ -1,8 +1,10 @@
 import cv2
 import time
+import glob
 import random
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 import torch
 from torch.utils.data import Dataset
@@ -21,14 +23,26 @@ def get_folds_data():
     return folds_data
 
 
+def get_test_data():
+    test_data = []
+    for image_path in glob.glob(str(config.test_dir / "*.jpg")):
+        test_data.append({
+            'image_path': image_path,
+            'StudyInstanceUID': Path(image_path).stem
+        })
+    return test_data
+
+
 class RanzcrDataset(Dataset):
     def __init__(self,
                  data,
                  folds=None,
-                 image_transform=None):
+                 image_transform=None,
+                 return_target=True):
         self.data = data
         self.folds = folds
         self.image_transform = image_transform
+        self.return_target = return_target
         if folds is not None:
             self.data = [s for s in self.data if s['fold'] in folds]
 
@@ -44,6 +58,9 @@ class RanzcrDataset(Dataset):
         sample = self.data[index]
         image = cv2.imread(sample['image_path'], cv2.IMREAD_GRAYSCALE)
 
+        if not self.return_target:
+            return image, None
+
         target = torch.zeros(config.n_classes, dtype=torch.float32)
         for cls in config.classes:
             target[config.class2target[cls]] = sample[cls]
@@ -54,4 +71,7 @@ class RanzcrDataset(Dataset):
         image, target = self._get_sample(index)
         if self.image_transform is not None:
             image = self.image_transform(image)
-        return image, target
+        if target is not None:
+            return image, target
+        else:
+            return image
