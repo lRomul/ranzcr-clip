@@ -67,7 +67,7 @@ class Albumentations:
 def get_transforms(train: bool, size: int):
     if train:
         transforms = Albumentations([
-            alb.RandomResizedCrop(size, size),
+            alb.RandomResizedCrop(size, size, scale=(0.8, 1.0)),
             alb.Normalize(mean=[0.485], std=[0.229]),
             alb.pytorch.ToTensorV2()
         ])

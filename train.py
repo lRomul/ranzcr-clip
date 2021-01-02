@@ -22,9 +22,9 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
-BATCH_SIZE = 32
-NUM_EPOCHS = 50
-IMAGE_SIZE = 320
+BATCH_SIZE = 16
+NUM_EPOCHS = 24
+IMAGE_SIZE = 512
 NUM_WORKERS = 8
 SAVE_DIR = config.experiments_dir / args.experiment
 PARAMS = {
@@ -38,7 +38,8 @@ PARAMS = {
     }),
     'loss': 'BCEWithLogitsLoss',
     'optimizer': ('Adam', {'lr': 0.001}),
-    'device': 'cuda'
+    'device': 'cuda',
+    'amp': True
 }
 
 
@@ -60,10 +61,11 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
     if 'pretrained' in model.params['nn_module'][1]:
         model.params['nn_module'][1]['pretrained'] = False
 
+    num_iterations = (len(train_dataset) // BATCH_SIZE) * NUM_EPOCHS
     callbacks = [
-        MonitorCheckpoint(save_dir, monitor='val_loss', max_saves=1),
-        CosineAnnealingLR(T_max=NUM_EPOCHS, eta_min=0),
-        EarlyStopping(monitor='val_loss', patience=12),
+        MonitorCheckpoint(save_dir, monitor='val_roc_auc', max_saves=1),
+        CosineAnnealingLR(T_max=num_iterations, eta_min=0, step_on_iteration=True),
+        EarlyStopping(monitor='val_roc_auc', patience=12),
         LoggingToFile(save_dir / 'log.txt'),
         LoggingToCSV(save_dir / 'log.csv')
     ]
@@ -71,7 +73,8 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
     model.fit(train_loader,
               val_loader=val_loader,
               num_epochs=NUM_EPOCHS,
-              callbacks=callbacks)
+              callbacks=callbacks,
+              metrics=['roc_auc'])
 
 
 if __name__ == "__main__":
