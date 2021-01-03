@@ -29,11 +29,11 @@ NUM_WORKERS = 8
 SAVE_DIR = config.experiments_dir / args.experiment
 PARAMS = {
     'nn_module': ('timm', {
-        'model_name': 'tf_efficientnet_b0_ns',
+        'model_name': 'tf_efficientnet_b3_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': 1,
-        'drop_rate': 0.2,
+        'drop_rate': 0.3,
         'drop_path_rate': 0.2
     }),
     'loss': 'BCEWithLogitsLoss',
@@ -65,7 +65,7 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
     callbacks = [
         MonitorCheckpoint(save_dir, monitor='val_roc_auc', max_saves=1),
         CosineAnnealingLR(T_max=num_iterations, eta_min=0, step_on_iteration=True),
-        EarlyStopping(monitor='val_roc_auc', patience=12),
+        EarlyStopping(monitor='val_roc_auc', patience=6),
         LoggingToFile(save_dir / 'log.txt'),
         LoggingToCSV(save_dir / 'log.csv')
     ]
