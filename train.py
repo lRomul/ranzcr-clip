@@ -39,7 +39,8 @@ PARAMS = {
     'loss': 'BCEWithLogitsLoss',
     'optimizer': ('AdamW', {'lr': 0.001}),
     'device': 'cuda',
-    'amp': True
+    'amp': True,
+    'clip_grad': False
 }
 
 
