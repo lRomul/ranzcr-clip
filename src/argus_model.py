@@ -31,7 +31,8 @@ class RanzcrModel(argus.Model):
             prediction = self.nn_module(input)
             loss = self.loss(prediction, target)
         self.scaler.scale(loss).backward()
-        torch.nn.utils.clip_grad_value_(self.nn_module.parameters(), clip_value=1.0)
+        torch.nn.utils.clip_grad_norm_(self.nn_module.parameters(),
+                                       max_norm=2.0, norm_type=2)
         self.optimizer.step()
 
         prediction = deep_detach(prediction)
