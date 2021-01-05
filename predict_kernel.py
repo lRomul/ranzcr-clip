@@ -9,7 +9,7 @@ from src.utils import get_best_model_path
 from src import config
 
 
-EXPERIMENT = "train_002"
+EXPERIMENT = "train_003"
 IMAGE_SIZE = 512
 BATCH_SIZE = 8
 TTA = False

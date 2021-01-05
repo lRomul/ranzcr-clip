@@ -3,11 +3,18 @@ import timm
 
 import argus
 from argus.utils import deep_to, deep_detach
+from argus.loss import pytorch_losses
+
+from src.losses import SoftBCEWithLogitsLoss
 
 
 class RanzcrModel(argus.Model):
     nn_module = {
         "timm": timm.create_model
+    }
+    loss = {
+        'SoftBCEWithLogitsLoss': SoftBCEWithLogitsLoss,
+        **pytorch_losses
     }
     prediction_transform = torch.nn.Sigmoid
 
@@ -24,6 +31,7 @@ class RanzcrModel(argus.Model):
             prediction = self.nn_module(input)
             loss = self.loss(prediction, target)
         self.scaler.scale(loss).backward()
+        torch.nn.utils.clip_grad_value_(self.nn_module.parameters(), clip_value=1.0)
         self.optimizer.step()
 
         prediction = deep_detach(prediction)
