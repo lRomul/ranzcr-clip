@@ -37,7 +37,7 @@ PARAMS = {
         'drop_path_rate': 0.2
     }),
     'loss': 'BCEWithLogitsLoss',
-    'optimizer': ('Adam', {'lr': 0.001}),
+    'optimizer': ('AdamW', {'lr': 0.001}),
     'device': 'cuda',
     'amp': True
 }
