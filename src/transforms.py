@@ -64,7 +64,7 @@ class Albumentations:
         return image
 
 
-def get_transforms(train: bool, size: int, interpolation=cv2.INTER_AREA):
+def get_transforms(train: bool, size: int, interpolation=cv2.INTER_CUBIC):
     if train:
         transforms = Albumentations([
             alb.RandomResizedCrop(size, size, scale=(0.8, 1.0),

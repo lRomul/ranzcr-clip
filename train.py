@@ -5,10 +5,10 @@ from torch.utils.data import DataLoader
 
 from argus.callbacks import (
     MonitorCheckpoint,
-    EarlyStopping,
     LoggingToFile,
     LoggingToCSV,
-    CosineAnnealingLR
+    CosineAnnealingLR,
+    LambdaLR
 )
 
 from src.datasets import RanzcrDataset, get_folds_data
@@ -23,10 +23,19 @@ parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
 BATCH_SIZE = 16
-NUM_EPOCHS = 24
 IMAGE_SIZE = 512
 NUM_WORKERS = 8
+NUM_EPOCHS = [2, 16, 2]
+STAGE = ['warmup', 'train', 'cooldown']
+BASE_LR = 1e-3
+MIN_BASE_LR = 1e-5
 SAVE_DIR = config.experiments_dir / args.experiment
+
+
+def get_lr(base_lr, batch_size):
+    return base_lr * (batch_size / 16)
+
+
 PARAMS = {
     'nn_module': ('timm', {
         'model_name': 'tf_efficientnet_b3_ns',
@@ -37,7 +46,7 @@ PARAMS = {
         'drop_path_rate': 0.2
     }),
     'loss': 'BCEWithLogitsLoss',
-    'optimizer': ('AdamW', {'lr': 0.001}),
+    'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
     'device': 'cuda',
     'amp': True,
     'clip_grad': False
@@ -45,37 +54,51 @@ PARAMS = {
 
 
 def train_fold(save_dir, train_folds, val_folds, folds_data):
-    train_transfrom = get_transforms(train=True, size=IMAGE_SIZE)
-    val_transform = get_transforms(train=False, size=IMAGE_SIZE)
-
-    train_dataset = RanzcrDataset(folds_data, folds=train_folds,
-                                  image_transform=train_transfrom)
-    val_dataset = RanzcrDataset(folds_data, folds=val_folds,
-                                image_transform=val_transform)
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
-                              shuffle=True, drop_last=True,
-                              num_workers=NUM_WORKERS)
-    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE * 2,
-                            shuffle=False, num_workers=NUM_WORKERS)
-
     model = RanzcrModel(PARAMS)
     if 'pretrained' in model.params['nn_module'][1]:
         model.params['nn_module'][1]['pretrained'] = False
 
-    num_iterations = (len(train_dataset) // BATCH_SIZE) * NUM_EPOCHS
-    callbacks = [
-        MonitorCheckpoint(save_dir, monitor='val_roc_auc', max_saves=1),
-        CosineAnnealingLR(T_max=num_iterations, eta_min=0, step_on_iteration=True),
-        EarlyStopping(monitor='val_roc_auc', patience=6),
-        LoggingToFile(save_dir / 'log.txt'),
-        LoggingToCSV(save_dir / 'log.csv')
-    ]
+    for num_epochs, stage in zip(NUM_EPOCHS, STAGE):
+        if stage != 'cooldown':
+            train_transfrom = get_transforms(train=False, size=IMAGE_SIZE)
+        else:
+            train_transfrom = get_transforms(train=True, size=IMAGE_SIZE)
+        val_transform = get_transforms(train=False, size=IMAGE_SIZE)
 
-    model.fit(train_loader,
-              val_loader=val_loader,
-              num_epochs=NUM_EPOCHS,
-              callbacks=callbacks,
-              metrics=['roc_auc'])
+        train_dataset = RanzcrDataset(folds_data, folds=train_folds,
+                                      image_transform=train_transfrom)
+        val_dataset = RanzcrDataset(folds_data, folds=val_folds,
+                                    image_transform=val_transform)
+        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
+                                  shuffle=True, drop_last=True,
+                                  num_workers=NUM_WORKERS)
+        val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE * 2,
+                                shuffle=False, num_workers=NUM_WORKERS)
+
+        callbacks = [
+            MonitorCheckpoint(save_dir, monitor='val_roc_auc', max_saves=1),
+            LoggingToFile(save_dir / 'log.txt', append=True),
+            LoggingToCSV(save_dir / 'log.csv', append=True)
+        ]
+
+        num_iterations = (len(train_dataset) // BATCH_SIZE) * num_epochs
+        if stage == 'train':
+            callbacks += [
+                CosineAnnealingLR(T_max=num_iterations,
+                                  eta_min=get_lr(MIN_BASE_LR, BATCH_SIZE),
+                                  step_on_iteration=True)
+            ]
+        elif stage == 'warmup':
+            callbacks += [
+                LambdaLR(lambda x: x / num_iterations,
+                         step_on_iteration=True)
+            ]
+
+        model.fit(train_loader,
+                  val_loader=val_loader,
+                  num_epochs=num_epochs,
+                  callbacks=callbacks,
+                  metrics=['roc_auc'])
 
 
 if __name__ == "__main__":
