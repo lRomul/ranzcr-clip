@@ -23,6 +23,7 @@ class RanzcrModel(argus.Model):
         self.amp = 'amp' in params and params['amp']
         self.clip_grad = 'clip_grad' in params and params['clip_grad']
         self.scaler = torch.cuda.amp.GradScaler()
+        self.model_ema = None
         self.logger.info(f"amp: {self.amp}, clip_grad: {self.clip_grad}")
 
     def train_step(self, batch, state) -> dict:
@@ -40,6 +41,9 @@ class RanzcrModel(argus.Model):
         self.scaler.step(self.optimizer)
         self.scaler.update()
 
+        if self.model_ema is not None:
+            self.model_ema.update(self.nn_module)
+
         prediction = deep_detach(prediction)
         target = deep_detach(target)
         prediction = self.prediction_transform(prediction)
@@ -48,3 +52,31 @@ class RanzcrModel(argus.Model):
             'target': target,
             'loss': loss.item()
         }
+
+    def val_step(self, batch, state) -> dict:
+        self.eval()
+        with torch.no_grad():
+            input, target = deep_to(batch, device=self.device, non_blocking=True)
+            if self.model_ema is None:
+                prediction = self.nn_module(input)
+            else:
+                prediction = self.model_ema.ema(input)
+            loss = self.loss(prediction, target)
+            prediction = self.prediction_transform(prediction)
+            return {
+                'prediction': prediction,
+                'target': target,
+                'loss': loss.item()
+            }
+
+    def predict(self, input):
+        self._check_predict_ready()
+        with torch.no_grad():
+            self.eval()
+            input = deep_to(input, self.device)
+            if self.model_ema is None:
+                prediction = self.nn_module(input)
+            else:
+                prediction = self.model_ema.ema(input)
+            prediction = self.prediction_transform(prediction)
+            return prediction

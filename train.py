@@ -14,6 +14,7 @@ from argus.callbacks import (
 from src.datasets import RanzcrDataset, get_folds_data
 from src.transforms import get_transforms
 from src.argus_model import RanzcrModel
+from src.ema import EmaMonitorCheckpoint, ModelEma
 from src import config
 
 
@@ -29,6 +30,9 @@ NUM_EPOCHS = [2, 16, 2]
 STAGE = ['warmup', 'train', 'cooldown']
 BASE_LR = 1e-3
 MIN_BASE_LR = 1e-5
+USE_AMP = True
+USE_EMA = False
+EMA_DECAY = 0.9998
 SAVE_DIR = config.experiments_dir / args.experiment
 
 
@@ -48,7 +52,7 @@ PARAMS = {
     'loss': 'BCEWithLogitsLoss',
     'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
     'device': 'cuda',
-    'amp': True,
+    'amp': USE_AMP,
     'clip_grad': False
 }
 
@@ -58,8 +62,15 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
     if 'pretrained' in model.params['nn_module'][1]:
         model.params['nn_module'][1]['pretrained'] = False
 
+    if USE_EMA:
+        print(f"EMA decay: {EMA_DECAY}")
+        model.model_ema = ModelEma(model.nn_module, decay=EMA_DECAY)
+        checkpoint = EmaMonitorCheckpoint
+    else:
+        checkpoint = MonitorCheckpoint
+
     for num_epochs, stage in zip(NUM_EPOCHS, STAGE):
-        if stage != 'cooldown':
+        if stage == 'cooldown':
             train_transfrom = get_transforms(train=False, size=IMAGE_SIZE)
         else:
             train_transfrom = get_transforms(train=True, size=IMAGE_SIZE)
@@ -76,7 +87,7 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
                                 shuffle=False, num_workers=NUM_WORKERS)
 
         callbacks = [
-            MonitorCheckpoint(save_dir, monitor='val_roc_auc', max_saves=1),
+            checkpoint(save_dir, monitor='val_roc_auc', max_saves=1),
             LoggingToFile(save_dir / 'log.txt', append=True),
             LoggingToCSV(save_dir / 'log.csv', append=True)
         ]
