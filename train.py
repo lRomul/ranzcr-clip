@@ -32,7 +32,7 @@ BASE_LR = 5e-4
 MIN_BASE_LR = 1e-5
 USE_AMP = True
 USE_EMA = True
-EMA_DECAY = 0.9998
+EMA_DECAY = 0.9999
 SAVE_DIR = config.experiments_dir / args.experiment
 
 
