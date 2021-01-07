@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 import pandas as pd
 
@@ -9,12 +10,20 @@ from src.utils import get_best_model_path
 from src import config
 
 
-EXPERIMENT = "train_003"
+parser = argparse.ArgumentParser()
+parser.add_argument('--experiment', required=True, type=str)
+parser.add_argument('--folds', default='', type=str)
+args = parser.parse_args()
+
+EXPERIMENT = args.experiment
 IMAGE_SIZE = 512
 BATCH_SIZE = 8
 TTA = False
 DEVICE = 'cuda'
-FOLDS = config.folds
+if args.folds:
+    FOLDS = [int(fold) for fold in args.folds.split(',')]
+else:
+    FOLDS = config.folds
 
 
 def experiment_pred(experiment_dir, test_data):
