@@ -13,12 +13,13 @@ from src import config
 parser = argparse.ArgumentParser()
 parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='', type=str)
+parser.add_argument('--tta', action="store_true")
 args = parser.parse_args()
 
 EXPERIMENT = args.experiment
 IMAGE_SIZE = 512
 BATCH_SIZE = 8
-TTA = False
+TTA = args.tta
 DEVICE = 'cuda'
 if args.folds:
     FOLDS = [int(fold) for fold in args.folds.split(',')]
