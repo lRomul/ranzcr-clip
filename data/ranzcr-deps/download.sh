@@ -7,7 +7,7 @@ pip3 download --no-deps \
 
 rm -rf ./ranzcr-clip
 git clone git@github.com:lRomul/ranzcr-clip.git
-[[ !  -z  "$2"  ]] && cd ranzcr-clip && git checkout "$2" && cd ..
+[[ !  -z  "$2"  ]] && cd ranzcr-clip && git checkout "$1" && cd ..
 
 cp -r "../experiments/$1" "./ranzcr-clip/data/experiments/$1"
 sed "s/experiment_name/$1/g" ./ranzcr-clip/kernel.py > ./kernel.py
