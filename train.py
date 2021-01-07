@@ -31,7 +31,7 @@ STAGE = ['warmup', 'train', 'cooldown']
 BASE_LR = 1e-3
 MIN_BASE_LR = 1e-5
 USE_AMP = True
-USE_EMA = False
+USE_EMA = True
 EMA_DECAY = 0.9998
 SAVE_DIR = config.experiments_dir / args.experiment
 
