@@ -26,13 +26,13 @@ args = parser.parse_args()
 BATCH_SIZE = 16
 IMAGE_SIZE = 512
 NUM_WORKERS = 8
-NUM_EPOCHS = [1, 12, 2]
+NUM_EPOCHS = [2, 12, 2]
 STAGE = ['warmup', 'train', 'cooldown']
-BASE_LR = 5e-4
-MIN_BASE_LR = 1e-5
+BASE_LR = 1e-3
+MIN_BASE_LR = 1e-4
 USE_AMP = True
 USE_EMA = True
-EMA_DECAY = 0.9999
+EMA_DECAY = 0.9998
 SAVE_DIR = config.experiments_dir / args.experiment
 
 
