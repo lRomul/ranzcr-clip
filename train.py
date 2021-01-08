@@ -1,6 +1,7 @@
 import json
 import argparse
 
+import torch
 from torch.utils.data import DataLoader
 
 from argus.callbacks import (
@@ -42,16 +43,16 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('timm', {
-        'model_name': 'tf_efficientnet_b3_ns',
+        'model_name': 'tf_efficientnet_b5_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': 1,
-        'drop_rate': 0.3,
+        'drop_rate': 0.4,
         'drop_path_rate': 0.2
     }),
     'loss': 'BCEWithLogitsLoss',
     'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
-    'device': 'cuda',
+    'device': [f'cuda:{i}' for i in range(torch.cuda.device_count())],
     'amp': USE_AMP,
     'clip_grad': False
 }
