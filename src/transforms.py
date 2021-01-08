@@ -71,8 +71,6 @@ def get_transforms(train: bool, size: int, interpolation=cv2.INTER_CUBIC):
                                   scale=(0.9, 1), p=1),
             alb.HorizontalFlip(p=0.5),
             alb.ShiftScaleRotate(interpolation=interpolation, p=0.5),
-            alb.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=10,
-                                   val_shift_limit=10, p=0.7),
             alb.RandomBrightnessContrast(brightness_limit=(-0.2, 0.2),
                                          contrast_limit=(-0.2, 0.2), p=0.7),
             alb.CLAHE(clip_limit=(1, 4), p=0.5),
@@ -97,13 +95,13 @@ def get_transforms(train: bool, size: int, interpolation=cv2.INTER_CUBIC):
             alb.IAASharpen(p=0.2),
             alb.Cutout(max_h_size=int(size * 0.1), max_w_size=int(size * 0.1),
                        num_holes=5, p=0.5),
-            alb.Normalize(),
+            alb.Normalize(mean=[0.485], std=[0.229]),
             alb.pytorch.ToTensorV2()
         ])
     else:
         transforms = Albumentations([
             alb.Resize(size, size, interpolation=interpolation),
-            alb.Normalize(),
+            alb.Normalize(mean=[0.485], std=[0.229]),
             alb.pytorch.ToTensorV2()
         ])
     return transforms

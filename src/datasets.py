@@ -56,7 +56,7 @@ class RanzcrDataset(Dataset):
 
     def _get_sample(self, index):
         sample = self.data[index]
-        image = cv2.imread(sample['image_path'], cv2.IMREAD_COLOR)
+        image = cv2.imread(sample['image_path'], cv2.IMREAD_GRAYSCALE)
 
         if not self.return_target:
             return image, None

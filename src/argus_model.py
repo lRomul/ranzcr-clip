@@ -24,7 +24,6 @@ class RanzcrModel(argus.Model):
         self.clip_grad = 'clip_grad' in params and params['clip_grad']
         self.scaler = torch.cuda.amp.GradScaler()
         self.model_ema = None
-        self.logger.info(f"amp: {self.amp}, clip_grad: {self.clip_grad}")
 
     def train_step(self, batch, state) -> dict:
         self.train()
