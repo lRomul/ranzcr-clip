@@ -24,7 +24,7 @@ def predict_data(data, model, batch_size, transform,
         pred = model.predict(batch)
 
         if tta:
-            hflip_batch = torch.flip(batch, [2])
+            hflip_batch = torch.flip(batch, [3])
             hflip_pred = model.predict(hflip_batch)
             pred = 0.5 * pred + 0.5 * hflip_pred
 

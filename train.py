@@ -26,10 +26,10 @@ args = parser.parse_args()
 BATCH_SIZE = 16
 IMAGE_SIZE = 512
 NUM_WORKERS = 8
-NUM_EPOCHS = [2, 12, 2]
-STAGE = ['warmup', 'train', 'cooldown']
+NUM_EPOCHS = [2, 16]
+STAGE = ['warmup', 'train']
 BASE_LR = 1e-3
-MIN_BASE_LR = 1e-4
+MIN_BASE_LR = 1e-5
 USE_AMP = True
 USE_EMA = True
 EMA_DECAY = 0.9998
@@ -45,7 +45,7 @@ PARAMS = {
         'model_name': 'tf_efficientnet_b3_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
-        'in_chans': 1,
+        'in_chans': 3,
         'drop_rate': 0.3,
         'drop_path_rate': 0.2
     }),
@@ -70,10 +70,7 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
         checkpoint = MonitorCheckpoint
 
     for num_epochs, stage in zip(NUM_EPOCHS, STAGE):
-        if stage == 'cooldown':
-            train_transfrom = get_transforms(train=False, size=IMAGE_SIZE)
-        else:
-            train_transfrom = get_transforms(train=True, size=IMAGE_SIZE)
+        train_transfrom = get_transforms(train=True, size=IMAGE_SIZE)
         val_transform = get_transforms(train=False, size=IMAGE_SIZE)
 
         train_dataset = RanzcrDataset(folds_data, folds=train_folds,

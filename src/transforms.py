@@ -67,24 +67,43 @@ class Albumentations:
 def get_transforms(train: bool, size: int, interpolation=cv2.INTER_CUBIC):
     if train:
         transforms = Albumentations([
-            alb.RandomResizedCrop(size, size, scale=(0.8, 1.0),
-                                  interpolation=interpolation),
+            alb.RandomResizedCrop(size, size, interpolation=interpolation,
+                                  scale=(0.9, 1), p=1),
             alb.HorizontalFlip(p=0.5),
-            alb.RandomBrightnessContrast(p=0.2, brightness_limit=(-0.2, 0.2),
-                                         contrast_limit=(-0.2, 0.2)),
-            alb.ShiftScaleRotate(p=0.2, shift_limit=0.0625,
-                                 scale_limit=0.2, rotate_limit=20,
-                                 interpolation=interpolation),
-            alb.CoarseDropout(p=0.2),
-            alb.Cutout(p=0.2, max_h_size=16, max_w_size=16,
-                       fill_value=0., num_holes=16),
-            alb.Normalize(mean=[0.485], std=[0.229]),
+            alb.ShiftScaleRotate(interpolation=interpolation, p=0.5),
+            alb.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=10,
+                                   val_shift_limit=10, p=0.7),
+            alb.RandomBrightnessContrast(brightness_limit=(-0.2, 0.2),
+                                         contrast_limit=(-0.2, 0.2), p=0.7),
+            alb.CLAHE(clip_limit=(1, 4), p=0.5),
+            alb.OneOf([
+                alb.OpticalDistortion(distort_limit=1.0, interpolation=interpolation),
+                alb.GridDistortion(num_steps=5, distort_limit=1., interpolation=interpolation),
+                alb.ElasticTransform(alpha=3, interpolation=interpolation),
+            ], p=0.2),
+            alb.OneOf([
+                alb.GaussNoise(var_limit=(10.0, 50.0)),
+                alb.GaussianBlur(),
+                alb.MotionBlur(),
+                alb.MedianBlur(),
+            ], p=0.2),
+            alb.Resize(size, size, interpolation=interpolation),
+            alb.OneOf([
+                alb.JpegCompression(),
+                alb.Downscale(scale_min=0.1, scale_max=0.15,
+                              interpolation=interpolation),
+            ], p=0.2),
+            alb.IAAPiecewiseAffine(p=0.2),
+            alb.IAASharpen(p=0.2),
+            alb.Cutout(max_h_size=int(size * 0.1), max_w_size=int(size * 0.1),
+                       num_holes=5, p=0.5),
+            alb.Normalize(),
             alb.pytorch.ToTensorV2()
         ])
     else:
         transforms = Albumentations([
             alb.Resize(size, size, interpolation=interpolation),
-            alb.Normalize(mean=[0.485], std=[0.229]),
+            alb.Normalize(),
             alb.pytorch.ToTensorV2()
         ])
     return transforms
