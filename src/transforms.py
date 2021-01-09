@@ -64,20 +64,26 @@ class Albumentations:
         return image
 
 
-def get_transforms(train: bool, size: int, interpolation=cv2.INTER_CUBIC):
+def get_transforms(train: bool, size: int,
+                   interpolation=cv2.INTER_CUBIC,
+                   border_mode=cv2.BORDER_CONSTANT):
     if train:
         transforms = Albumentations([
             alb.RandomResizedCrop(size, size, interpolation=interpolation,
                                   scale=(0.9, 1), p=1),
             alb.HorizontalFlip(p=0.5),
-            alb.ShiftScaleRotate(interpolation=interpolation, p=0.5),
+            alb.ShiftScaleRotate(rotate_limit=20, scale_limit=0, border_mode=border_mode,
+                                 interpolation=interpolation, p=0.5),
             alb.RandomBrightnessContrast(brightness_limit=(-0.2, 0.2),
                                          contrast_limit=(-0.2, 0.2), p=0.7),
             alb.CLAHE(clip_limit=(1, 4), p=0.5),
             alb.OneOf([
-                alb.OpticalDistortion(distort_limit=1.0, interpolation=interpolation),
-                alb.GridDistortion(num_steps=5, distort_limit=1., interpolation=interpolation),
-                alb.ElasticTransform(alpha=3, interpolation=interpolation),
+                alb.OpticalDistortion(distort_limit=0.5, border_mode=border_mode,
+                                      interpolation=interpolation),
+                alb.GridDistortion(num_steps=5, distort_limit=0.5,
+                                   border_mode=border_mode, interpolation=interpolation),
+                alb.ElasticTransform(alpha=2, border_mode=border_mode,
+                                     interpolation=interpolation),
             ], p=0.2),
             alb.OneOf([
                 alb.GaussNoise(var_limit=(10.0, 50.0)),
@@ -85,10 +91,9 @@ def get_transforms(train: bool, size: int, interpolation=cv2.INTER_CUBIC):
                 alb.MotionBlur(),
                 alb.MedianBlur(),
             ], p=0.2),
-            alb.Resize(size, size, interpolation=interpolation),
             alb.OneOf([
                 alb.JpegCompression(),
-                alb.Downscale(scale_min=0.1, scale_max=0.15,
+                alb.Downscale(scale_min=0.25, scale_max=0.5,
                               interpolation=interpolation),
             ], p=0.2),
             alb.IAAPiecewiseAffine(p=0.2),
