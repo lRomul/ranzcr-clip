@@ -16,7 +16,7 @@ from src.datasets import RanzcrDataset, get_folds_data
 from src.transforms import get_transforms
 from src.argus_model import RanzcrModel
 from src.ema import EmaMonitorCheckpoint, ModelEma
-from src.mixers import UseMixerWithProb, MixUp
+from src.mixers import UseMixerWithProb, CutMix
 from src import config
 
 
@@ -77,7 +77,7 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
         val_transform = get_transforms(train=False, size=IMAGE_SIZE)
 
         if MIXER_PROB:
-            mixer = UseMixerWithProb(MixUp(alpha_dist='beta'), prob=MIXER_PROB)
+            mixer = UseMixerWithProb(CutMix(beta=1.0), prob=MIXER_PROB)
         else:
             mixer = None
 
