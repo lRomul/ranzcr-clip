@@ -16,6 +16,7 @@ from src.datasets import RanzcrDataset, get_folds_data
 from src.transforms import get_transforms
 from src.argus_model import RanzcrModel
 from src.ema import EmaMonitorCheckpoint, ModelEma
+from src.mixers import UseMixerWithProb, MixUp
 from src import config
 
 
@@ -27,12 +28,13 @@ args = parser.parse_args()
 BATCH_SIZE = 16
 IMAGE_SIZE = 512
 NUM_WORKERS = 8
-NUM_EPOCHS = [2, 30]
+NUM_EPOCHS = [2, 40]
 STAGE = ['warmup', 'train']
 BASE_LR = 1e-3
 MIN_BASE_LR = 1e-5
 USE_AMP = True
 USE_EMA = True
+MIXER_PROB = 1.0
 EMA_DECAY = 0.9998
 SAVE_DIR = config.experiments_dir / args.experiment
 
@@ -74,8 +76,13 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
         train_transfrom = get_transforms(train=True, size=IMAGE_SIZE)
         val_transform = get_transforms(train=False, size=IMAGE_SIZE)
 
+        if MIXER_PROB:
+            mixer = UseMixerWithProb(MixUp(alpha_dist='beta'), prob=MIXER_PROB)
+        else:
+            mixer = None
+
         train_dataset = RanzcrDataset(folds_data, folds=train_folds,
-                                      image_transform=train_transfrom)
+                                      image_transform=train_transfrom, mixer=mixer)
         val_dataset = RanzcrDataset(folds_data, folds=val_folds,
                                     image_transform=val_transform)
         train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE,

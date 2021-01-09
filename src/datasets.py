@@ -38,11 +38,13 @@ class RanzcrDataset(Dataset):
                  data,
                  folds=None,
                  image_transform=None,
-                 return_target=True):
+                 return_target=True,
+                 mixer=None):
         self.data = data
         self.folds = folds
         self.image_transform = image_transform
         self.return_target = return_target
+        self.mixer = mixer
         if folds is not None:
             self.data = [s for s in self.data if s['fold'] in folds]
 
@@ -54,9 +56,12 @@ class RanzcrDataset(Dataset):
         random.seed(seed)
         np.random.seed(seed % (2**32 - 1))
 
-    def _get_sample(self, index):
+    def get_sample(self, index):
         sample = self.data[index]
         image = cv2.imread(sample['image_path'], cv2.IMREAD_GRAYSCALE)
+
+        if self.image_transform is not None:
+            image = self.image_transform(image)
 
         if not self.return_target:
             return image, None
@@ -68,10 +73,10 @@ class RanzcrDataset(Dataset):
 
     def __getitem__(self, index):
         self._set_random_seed(index)
-        image, target = self._get_sample(index)
-        if self.image_transform is not None:
-            image = self.image_transform(image)
+        image, target = self.get_sample(index)
         if target is not None:
+            if self.mixer is not None:
+                image, target = self.mixer(self, image, target)
             return image, target
         else:
             return image
