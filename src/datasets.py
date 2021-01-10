@@ -15,11 +15,20 @@ from src import config
 def get_folds_data():
     train_df = pd.read_csv(config.train_folds_path)
     train_dict = train_df.to_dict(orient='index')
-    folds_data = []
+    folds_dict = dict()
     for _, sample in train_dict.items():
         sample['image_path'] = str(config.train_dir /
                                    (sample['StudyInstanceUID'] + '.jpg'))
-        folds_data.append(sample)
+        sample['annotations'] = list()
+        folds_dict[sample['StudyInstanceUID']] = sample
+    train_annotations_df = pd.read_csv(config.train_annotations_csv_path)
+    for ann_sample in train_annotations_df.to_dict(orient='index').values():
+        sample = folds_dict[ann_sample['StudyInstanceUID']]
+        sample['annotations'].append({
+            'label': ann_sample['label'],
+            'data': ann_sample['data']
+        })
+    folds_data = list(folds_dict.values())
     return folds_data
 
 
