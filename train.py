@@ -9,6 +9,7 @@ from argus.callbacks import (
     LoggingToFile,
     LoggingToCSV,
     CosineAnnealingLR,
+    EarlyStopping,
     LambdaLR
 )
 
@@ -43,12 +44,10 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('timm', {
-        'model_name': 'tf_efficientnet_b3_ns',
+        'model_name': 'resnet200d',
         'pretrained': True,
         'num_classes': config.n_classes,
-        'in_chans': 1,
-        'drop_rate': 0.3,
-        'drop_path_rate': 0.2
+        'in_chans': 1
     }),
     'loss': 'BCEWithLogitsLoss',
     'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
@@ -86,6 +85,7 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
 
         callbacks = [
             checkpoint(save_dir, monitor='val_roc_auc', max_saves=1),
+            EarlyStopping(monitor='val_roc_auc', patience=3),
             LoggingToFile(save_dir / 'log.txt', append=True),
             LoggingToCSV(save_dir / 'log.csv', append=True)
         ]

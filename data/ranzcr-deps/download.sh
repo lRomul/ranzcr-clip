@@ -2,7 +2,7 @@ cd $(dirname "${BASH_SOURCE[0]}")
 
 rm -rf ./*.whl
 pip3 download --no-deps \
-    timm==0.3.2 \
+    timm==0.3.4 \
     pytorch-argus==0.2.0
 
 rm -rf ./ranzcr-clip
