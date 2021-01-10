@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 
 kernel_mode = False
@@ -22,6 +23,7 @@ sample_submission_path = input_data_dir / 'sample_submission.csv'
 train_folds_path = output_data_dir / 'train_folds_v1.csv'
 experiments_dir = output_data_dir / 'experiments'
 predictions_dir = output_data_dir / 'predictions'
+train_visualizations_dir = output_data_dir / 'train_visualizations'
 
 classes = [
     'ETT - Abnormal',
@@ -39,6 +41,11 @@ classes = [
 
 target2class = {trg: cls for trg, cls in enumerate(classes)}
 class2target = {cls: trg for trg, cls in enumerate(classes)}
+class2color = dict()
+for cls, color in zip(classes, plt.get_cmap('Set3').colors):
+    color = tuple([int(c * 255) for c in color])
+    class2color[cls] = color
+
 n_classes = len(classes)
 n_folds = 5
 folds = list(range(n_folds))

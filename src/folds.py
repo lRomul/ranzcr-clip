@@ -7,7 +7,7 @@ from sklearn.model_selection import KFold
 from src import config
 
 
-if __name__ == '__main__':
+def make_folds():
     random_state = 42
 
     random.seed(random_state)
@@ -27,3 +27,7 @@ if __name__ == '__main__':
 
     train_df.to_csv(config.train_folds_path, index=False)
     print(f"Train folds saved to '{config.train_folds_path}'")
+
+
+if __name__ == '__main__':
+    make_folds()

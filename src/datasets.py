@@ -1,6 +1,7 @@
 import cv2
 import time
 import glob
+import json
 import random
 import numpy as np
 import pandas as pd
@@ -9,10 +10,14 @@ from pathlib import Path
 import torch
 from torch.utils.data import Dataset
 
+from src.folds import make_folds
 from src import config
 
 
 def get_folds_data():
+    if not config.train_folds_path.exists():
+        make_folds()
+
     train_df = pd.read_csv(config.train_folds_path)
     train_dict = train_df.to_dict(orient='index')
     folds_dict = dict()
@@ -26,10 +31,37 @@ def get_folds_data():
         sample = folds_dict[ann_sample['StudyInstanceUID']]
         sample['annotations'].append({
             'label': ann_sample['label'],
-            'data': ann_sample['data']
+            'data': json.loads(ann_sample['data'])
         })
     folds_data = list(folds_dict.values())
     return folds_data
+
+
+def draw_visualization(sample):
+    image = cv2.imread(sample['image_path'])
+    image = np.concatenate([image, image], axis=1)
+
+    annotations_set = set()
+    for annotation in sample['annotations']:
+        color = config.class2color[annotation['label']]
+        point_lst = annotation['data']
+        for i in range(len(point_lst) - 1):
+            cv2.line(image, (point_lst[i][0], point_lst[i][1]),
+                     (point_lst[i + 1][0], point_lst[i + 1][1]), color, 10)
+        annotations_set.add(annotation['label'])
+
+    for cls, trg in config.class2target.items():
+        if cls in annotations_set:
+            color = config.class2color[cls]
+        else:
+            color = (255, 255, 255)
+        if sample[cls]:
+            cls += ' *'
+        cv2.putText(image, cls, (50, 70 + trg * 50),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.4, color, 2)
+
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    return image
 
 
 def get_test_data():
