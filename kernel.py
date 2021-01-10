@@ -14,4 +14,4 @@ run("pip install /kaggle/input/ranzcr-clip-dataset/timm-0.3.2-py3-none-any.whl")
 run("cp -r /kaggle/input/ranzcr-clip-dataset/ranzcr-clip/* .")
 
 run(f"python predict.py --experiment {EXPERIMENT} {'--tta' if TTA else ''}")
-run('rm -v !("submission.csv")')
+run('rm -rfv !("submission.csv")')
