@@ -25,13 +25,13 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
-BATCH_SIZE = 16
+BATCH_SIZE = 20
 IMAGE_SIZE = 512
 NUM_WORKERS = 8
 NUM_EPOCHS = [2, 30]
 STAGE = ['warmup', 'train']
-BASE_LR = 1e-3
-MIN_BASE_LR = 1e-5
+BASE_LR = 3e-5
+MIN_BASE_LR = BASE_LR * 1e-2
 USE_AMP = True
 USE_EMA = True
 EMA_DECAY = 0.9998
@@ -39,7 +39,7 @@ SAVE_DIR = config.experiments_dir / args.experiment
 
 
 def get_lr(base_lr, batch_size):
-    return base_lr * (batch_size / 16)
+    return base_lr * (batch_size / 64)
 
 
 PARAMS = {
@@ -50,7 +50,7 @@ PARAMS = {
         'in_chans': 1
     }),
     'loss': 'BCEWithLogitsLoss',
-    'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
+    'optimizer': ('Adam', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
     'device': [f'cuda:{i}' for i in range(torch.cuda.device_count())],
     'amp': USE_AMP,
     'clip_grad': False
