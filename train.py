@@ -9,7 +9,6 @@ from argus.callbacks import (
     LoggingToFile,
     LoggingToCSV,
     CosineAnnealingLR,
-    EarlyStopping,
     LambdaLR
 )
 
@@ -25,13 +24,13 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
-BATCH_SIZE = 20
+BATCH_SIZE = 32
 IMAGE_SIZE = 512
 NUM_WORKERS = 8
 NUM_EPOCHS = [2, 30]
 STAGE = ['warmup', 'train']
-BASE_LR = 3e-4
-MIN_BASE_LR = BASE_LR * 1e-2
+BASE_LR = 1e-3
+MIN_BASE_LR = 1e-5
 USE_AMP = True
 USE_EMA = True
 EMA_DECAY = 0.9998
@@ -39,18 +38,20 @@ SAVE_DIR = config.experiments_dir / args.experiment
 
 
 def get_lr(base_lr, batch_size):
-    return base_lr * (batch_size / 64)
+    return base_lr * (batch_size / 16)
 
 
 PARAMS = {
     'nn_module': ('timm', {
-        'model_name': 'resnet200d',
+        'model_name': 'tf_efficientnet_b3_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
-        'in_chans': 1
+        'in_chans': 1,
+        'drop_rate': 0.3,
+        'drop_path_rate': 0.2
     }),
     'loss': 'BCEWithLogitsLoss',
-    'optimizer': ('Adam', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
+    'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
     'device': [f'cuda:{i}' for i in range(torch.cuda.device_count())],
     'amp': USE_AMP,
     'clip_grad': False
@@ -85,7 +86,6 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
 
         callbacks = [
             checkpoint(save_dir, monitor='val_roc_auc', max_saves=1),
-            EarlyStopping(monitor='val_roc_auc', patience=3),
             LoggingToFile(save_dir / 'log.txt', append=True),
             LoggingToCSV(save_dir / 'log.csv', append=True)
         ]
