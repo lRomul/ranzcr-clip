@@ -1,6 +1,7 @@
 import json
 import argparse
 
+import torch
 from torch.utils.data import DataLoader
 
 from argus.callbacks import (
@@ -23,10 +24,10 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
-BATCH_SIZE = 16
+BATCH_SIZE = 32
 IMAGE_SIZE = 512
 NUM_WORKERS = 8
-NUM_EPOCHS = [2, 16]
+NUM_EPOCHS = [2, 30]
 STAGE = ['warmup', 'train']
 BASE_LR = 1e-3
 MIN_BASE_LR = 1e-5
@@ -45,13 +46,13 @@ PARAMS = {
         'model_name': 'tf_efficientnet_b3_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
-        'in_chans': 3,
+        'in_chans': 1,
         'drop_rate': 0.3,
         'drop_path_rate': 0.2
     }),
     'loss': 'BCEWithLogitsLoss',
     'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
-    'device': 'cuda',
+    'device': [f'cuda:{i}' for i in range(torch.cuda.device_count())],
     'amp': USE_AMP,
     'clip_grad': False
 }
