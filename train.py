@@ -24,8 +24,8 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
-BATCH_SIZE = 32
-IMAGE_SIZE = 512
+BATCH_SIZE = 10
+IMAGE_SIZE = 1024
 NUM_WORKERS = 8
 NUM_EPOCHS = [2, 30]
 STAGE = ['warmup', 'train']
