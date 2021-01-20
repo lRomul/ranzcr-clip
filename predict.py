@@ -17,7 +17,7 @@ parser.add_argument('--tta', action="store_true")
 args = parser.parse_args()
 
 EXPERIMENT = args.experiment
-IMAGE_SIZE = 512
+IMAGE_SIZE = 1024
 BATCH_SIZE = 8
 TTA = args.tta
 DEVICE = 'cuda'
