@@ -1,3 +1,1 @@
-FROM ghcr.io/osai-ai/dokai:20.12-pytorch
-
-RUN pip3 install -U timm==0.3.4
+FROM ghcr.io/osai-ai/dokai:21.01-pytorch
