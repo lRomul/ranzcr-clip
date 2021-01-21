@@ -25,7 +25,7 @@ parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
 BATCH_SIZE = 4
-IMAGE_SIZE = 1024
+IMAGE_SIZE = 768
 NUM_WORKERS = 8
 NUM_EPOCHS = [2, 16]
 STAGE = ['warmup', 'train']
