@@ -24,7 +24,7 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
-BATCH_SIZE = 4
+BATCH_SIZE = 16
 IMAGE_SIZE = 768
 NUM_WORKERS = 8
 NUM_EPOCHS = [2, 16]
@@ -43,11 +43,11 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('timm', {
-        'model_name': 'tf_efficientnet_b5_ns',
+        'model_name': 'tf_efficientnet_b3_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': 1,
-        'drop_rate': 0.4,
+        'drop_rate': 0.3,
         'drop_path_rate': 0.2
     }),
     'loss': 'BCEWithLogitsLoss',

@@ -18,7 +18,7 @@ args = parser.parse_args()
 
 EXPERIMENT = args.experiment
 IMAGE_SIZE = 768
-BATCH_SIZE = 4
+BATCH_SIZE = 8
 TTA = args.tta
 DEVICE = 'cuda'
 if args.folds:
