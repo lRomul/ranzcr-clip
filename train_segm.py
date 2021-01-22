@@ -59,7 +59,7 @@ PARAMS = {
 
 def train_fold(save_dir, train_folds, val_folds, folds_data):
     model = RanzcrSegmModel(PARAMS)
-    if 'pretrained' in model.params['nn_module'][1]:
+    if 'encoder_weights' in model.params['nn_module'][1]:
         model.params['nn_module'][1]["encoder_weights"] = None
 
     if USE_EMA:
