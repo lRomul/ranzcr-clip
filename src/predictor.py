@@ -13,7 +13,7 @@ def predict_data(data, model, batch_size, transform,
     dataset = RanzcrDataset(data,
                             return_target=False,
                             folds=None,
-                            image_transform=transform)
+                            transform=transform)
     loader = DataLoader(dataset,
                         batch_size=batch_size,
                         shuffle=False,

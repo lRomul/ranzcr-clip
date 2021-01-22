@@ -24,7 +24,7 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
-BATCH_SIZE = 16
+BATCH_SIZE = 32
 IMAGE_SIZE = 768
 NUM_WORKERS = 8
 NUM_EPOCHS = [2, 16]
@@ -50,11 +50,12 @@ PARAMS = {
         'drop_rate': 0.3,
         'drop_path_rate': 0.2
     }),
-    'loss': 'BCEWithLogitsLoss',
+    'loss': 'BinaryFocalLoss',
     'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
     'device': [f'cuda:{i}' for i in range(torch.cuda.device_count())],
     'amp': USE_AMP,
-    'clip_grad': False
+    'clip_grad': False,
+    'image_size': IMAGE_SIZE
 }
 
 
@@ -75,9 +76,9 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
         val_transform = get_transforms(train=False, size=IMAGE_SIZE)
 
         train_dataset = RanzcrDataset(folds_data, folds=train_folds,
-                                      image_transform=train_transfrom)
+                                      transform=train_transfrom)
         val_dataset = RanzcrDataset(folds_data, folds=val_folds,
-                                    image_transform=val_transform)
+                                    transform=val_transform)
         train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
                                   shuffle=True, drop_last=True,
                                   num_workers=NUM_WORKERS)

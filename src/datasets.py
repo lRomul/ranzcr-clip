@@ -22,8 +22,9 @@ def get_folds_data():
     train_dict = train_df.to_dict(orient='index')
     folds_dict = dict()
     for _, sample in train_dict.items():
-        sample['image_path'] = str(config.train_dir /
-                                   (sample['StudyInstanceUID'] + '.jpg'))
+        image_name = sample['StudyInstanceUID'] + '.jpg'
+        sample['image_path'] = str(config.train_dir / image_name)
+        sample['lung_mask_path'] = str(config.segm_train_lung_masks_dir / image_name)
         sample['annotations'] = list()
         folds_dict[sample['StudyInstanceUID']] = sample
     train_annotations_df = pd.read_csv(config.train_annotations_csv_path)
@@ -78,12 +79,14 @@ class RanzcrDataset(Dataset):
     def __init__(self,
                  data,
                  folds=None,
-                 image_transform=None,
-                 return_target=True):
+                 transform=None,
+                 return_target=True,
+                 segm=False):
         self.data = data
         self.folds = folds
-        self.image_transform = image_transform
+        self.transform = transform
         self.return_target = return_target
+        self.segm = segm
         if folds is not None:
             self.data = [s for s in self.data if s['fold'] in folds]
 
@@ -102,16 +105,25 @@ class RanzcrDataset(Dataset):
         if not self.return_target:
             return image, None
 
-        target = torch.zeros(config.n_classes, dtype=torch.float32)
-        for cls in config.classes:
-            target[config.class2target[cls]] = sample[cls]
+        if self.segm:
+            target = cv2.imread(sample['lung_mask_path'], cv2.IMREAD_GRAYSCALE)
+            target = (target > 128).astype('float32')
+            target = target[..., np.newaxis]
+        else:
+            target = torch.zeros(config.n_classes, dtype=torch.float32)
+            for cls in config.classes:
+                target[config.class2target[cls]] = sample[cls]
+
         return image, target
 
     def __getitem__(self, index):
         self._set_random_seed(index)
         image, target = self._get_sample(index)
-        if self.image_transform is not None:
-            image = self.image_transform(image)
+        if self.transform is not None:
+            if self.segm:
+                image, target = self.transform(image, target)
+            else:
+                image = self.transform(image)
         if target is not None:
             return image, target
         else:
