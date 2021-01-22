@@ -5,5 +5,5 @@ RUN pip install --no-cache-dir --no-deps \
     pretrainedmodels==0.7.4 \
     efficientnet-pytorch==0.6.3 \
     tqdm==4.56.0 \
-    ipywidgets==7.6.3
+    ipywidgets==7.6.3 \
     pytorch-toolbelt==0.4.1
