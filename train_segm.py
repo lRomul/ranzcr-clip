@@ -84,7 +84,6 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
                                 shuffle=False, num_workers=NUM_WORKERS)
 
         callbacks = [
-            checkpoint(save_dir, monitor='val_binary_iou', max_saves=1),
             LoggingToFile(save_dir / 'log.txt', append=True),
             LoggingToCSV(save_dir / 'log.csv', append=True)
         ]
@@ -94,7 +93,8 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
             callbacks += [
                 CosineAnnealingLR(T_max=num_iterations,
                                   eta_min=get_lr(MIN_BASE_LR, BATCH_SIZE),
-                                  step_on_iteration=True)
+                                  step_on_iteration=True),
+                checkpoint(save_dir, monitor='val_binary_iou', max_saves=1)
             ]
         elif stage == 'warmup':
             callbacks += [
