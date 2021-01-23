@@ -24,7 +24,8 @@ class SegmPredictor:
         dataset = RanzcrDataset(data,
                                 return_target=False,
                                 folds=None,
-                                transform=self.transform)
+                                transform=self.transform,
+                                segm=True)
         loader = DataLoader(dataset,
                             batch_size=self.batch_size,
                             shuffle=False,

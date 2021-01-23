@@ -81,7 +81,7 @@ def get_test_data():
 class RanzcrDataset(Dataset):
     def __init__(self,
                  data,
-                 crop_settings,
+                 crop_settings=None,
                  folds=None,
                  transform=None,
                  return_target=True,
@@ -106,10 +106,14 @@ class RanzcrDataset(Dataset):
     def _get_sample(self, index):
         sample = self.data[index]
         image = cv2.imread(sample['image_path'], cv2.IMREAD_GRAYSCALE)
+
+        if self.segm and not self.return_target:
+            return image, None
+
         mask = cv2.imread(sample['lung_mask_path'], cv2.IMREAD_GRAYSCALE)
         mask = (mask > 128).astype('float32')
 
-        if self.segm:
+        if self.segm and self.return_target:
             mask = mask[..., np.newaxis]
             return image, mask
 
