@@ -1,5 +1,13 @@
 import re
 from pathlib import Path
+import matplotlib.pyplot as plt
+
+
+def image_show(image, title='', figsize=(5, 5)):
+    plt.figure(figsize=figsize)
+    plt.title(title)
+    plt.imshow(image)
+    plt.show()
 
 
 def get_best_model_path(dir_path, return_score=False):

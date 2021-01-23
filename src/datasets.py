@@ -14,7 +14,9 @@ from src.folds import make_folds
 from src import config
 
 
-def get_folds_data():
+def get_folds_data(lung_masks_dir=config.segm_train_lung_masks_dir):
+    lung_masks_dir = Path(lung_masks_dir)
+
     if not config.train_folds_path.exists():
         make_folds()
 
@@ -24,7 +26,7 @@ def get_folds_data():
     for _, sample in train_dict.items():
         image_name = sample['StudyInstanceUID'] + '.jpg'
         sample['image_path'] = str(config.train_dir / image_name)
-        sample['lung_mask_path'] = str(config.segm_train_lung_masks_dir / image_name)
+        sample['lung_mask_path'] = str(lung_masks_dir / image_name)
         sample['annotations'] = list()
         folds_dict[sample['StudyInstanceUID']] = sample
     train_annotations_df = pd.read_csv(config.train_annotations_csv_path)
