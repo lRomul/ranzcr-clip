@@ -13,13 +13,11 @@ from src import config
 parser = argparse.ArgumentParser()
 parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='', type=str)
-parser.add_argument('--tta', action="store_true")
 args = parser.parse_args()
 
 EXPERIMENT = args.experiment
 IMAGE_SIZE = 768
 BATCH_SIZE = 8
-TTA = args.tta
 DEVICE = 'cuda'
 if args.folds:
     FOLDS = [int(fold) for fold in args.folds.split(',')]
@@ -39,7 +37,7 @@ def experiment_pred(experiment_dir, test_data):
         print("Model path", model_path)
         predictor = Predictor(model_path, BATCH_SIZE,
                               image_transforms,
-                              DEVICE, TTA,
+                              DEVICE,
                               num_workers=2)
 
         pred = predictor.predict(test_data)

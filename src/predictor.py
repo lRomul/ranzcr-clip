@@ -7,8 +7,7 @@ from src.datasets import RanzcrDataset
 
 
 @torch.no_grad()
-def predict_data(data, model, batch_size, transform,
-                 tta=False, num_workers=0):
+def predict_data(data, model, batch_size, transform, num_workers=0):
 
     dataset = RanzcrDataset(data,
                             return_target=False,
@@ -22,12 +21,6 @@ def predict_data(data, model, batch_size, transform,
     preds_lst = []
     for batch in loader:
         pred = model.predict(batch)
-
-        if tta:
-            hflip_batch = torch.flip(batch, [3])
-            hflip_pred = model.predict(hflip_batch)
-            pred = 0.5 * pred + 0.5 * hflip_pred
-
         preds_lst.append(pred)
 
     pred = torch.cat(preds_lst, dim=0)
@@ -40,21 +33,18 @@ class Predictor:
     def __init__(self,
                  model_path,
                  batch_size,
-                 image_transform,
+                 transform,
                  device='cuda',
-                 tta=False,
                  num_workers=0):
         self.model = load_model(model_path, device=device)
         self.batch_size = batch_size
-        self.image_transform = image_transform
-        self.tta = tta
+        self.transform = transform
         self.num_workers = num_workers
 
     def predict(self, data):
         pred = predict_data(data,
                             self.model,
                             self.batch_size,
-                            self.image_transform,
-                            self.tta,
+                            self.transform,
                             self.num_workers)
         return pred
