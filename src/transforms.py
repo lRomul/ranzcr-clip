@@ -60,9 +60,16 @@ class Albumentations:
 
     def __call__(self, image, trg=None):
         if trg is None:
-            augmented = self.albumentations(image=image)
-            image = augmented["image"]
-            return image
+            if isinstance(image, (tuple, list)):
+                img_lst = []
+                for img in image:
+                    augmented = self.albumentations(image=img)
+                    img_lst.append(augmented["image"])
+                return img_lst
+            else:
+                augmented = self.albumentations(image=image)
+                image = augmented["image"]
+                return image
         else:
             augmented = self.albumentations(image=image, mask=trg)
             image = augmented["image"]

@@ -10,6 +10,7 @@ from pathlib import Path
 import torch
 from torch.utils.data import Dataset
 
+from src.segm.processing import crop_region_by_mask
 from src.folds import make_folds
 from src import config
 
@@ -80,11 +81,13 @@ def get_test_data():
 class RanzcrDataset(Dataset):
     def __init__(self,
                  data,
+                 crop_settings,
                  folds=None,
                  transform=None,
                  return_target=True,
                  segm=False):
         self.data = data
+        self.crop_settings = crop_settings
         self.folds = folds
         self.transform = transform
         self.return_target = return_target
@@ -103,20 +106,37 @@ class RanzcrDataset(Dataset):
     def _get_sample(self, index):
         sample = self.data[index]
         image = cv2.imread(sample['image_path'], cv2.IMREAD_GRAYSCALE)
-
-        if not self.return_target:
-            return image, None
+        mask = cv2.imread(sample['lung_mask_path'], cv2.IMREAD_GRAYSCALE)
+        mask = (mask > 128).astype('float32')
 
         if self.segm:
-            target = cv2.imread(sample['lung_mask_path'], cv2.IMREAD_GRAYSCALE)
-            target = (target > 128).astype('float32')
-            target = target[..., np.newaxis]
-        else:
-            target = torch.zeros(config.n_classes, dtype=torch.float32)
-            for cls in config.classes:
-                target[config.class2target[cls]] = sample[cls]
+            mask = mask[..., np.newaxis]
+            return image, mask
 
-        return image, target
+        image_lst = []
+        for sub_cls, crop_setting in self.crop_settings.items():
+            if crop_setting['work']:
+                crop_image = crop_region_by_mask(
+                    image, mask,
+                    size_coef=crop_setting['size_coef'],
+                    shift_x_coef=crop_setting['shift_x_coef'],
+                    shift_y_coef=crop_setting['shift_y_coef']
+                )
+                image_lst.append(crop_image)
+            else:
+                image_lst.append(image)
+
+        if not self.return_target:
+            return image_lst, None
+
+        target_lst = []
+        for sub_cls, crop_setting in self.crop_settings.items():
+            target = torch.zeros(config.n_sub_classes[sub_cls], dtype=torch.float32)
+            for cls in config.sub_classes[sub_cls]:
+                target[config.sub_classes2sub_target[sub_cls][cls]] = sample[cls]
+            target_lst.append(target)
+
+        return image_lst, target_lst
 
     def __getitem__(self, index):
         self._set_random_seed(index)
@@ -126,6 +146,10 @@ class RanzcrDataset(Dataset):
                 image, target = self.transform(image, target)
             else:
                 image = self.transform(image)
+                if isinstance(image, (tuple, list)) and len(image) == 1:
+                    image = image[0]
+                    if target is not None:
+                        target = target[0]
         if target is not None:
             return image, target
         else:

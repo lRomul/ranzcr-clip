@@ -7,6 +7,8 @@ def image_show(image, title='', figsize=(5, 5)):
     plt.figure(figsize=figsize)
     plt.title(title)
     plt.imshow(image)
+    plt.xticks([]), plt.yticks([])
+    plt.margins(0, 0)
     plt.show()
 
 

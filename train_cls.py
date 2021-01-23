@@ -16,6 +16,7 @@ from src.datasets import RanzcrDataset, get_folds_data
 from src.transforms import get_transforms
 from src.argus_model import RanzcrModel
 from src.ema import EmaMonitorCheckpoint, ModelEma
+from src.metrics import RocAuc
 from src import config
 
 
@@ -24,8 +25,10 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
+SEGM_EXPERIMENT = 'segm_003'
+TASK = 'CVC'
 BATCH_SIZE = 32
-IMAGE_SIZE = 768
+IMAGE_SIZE = 512
 NUM_WORKERS = 8
 NUM_EPOCHS = [2, 16]
 STAGE = ['warmup', 'train']
@@ -33,8 +36,30 @@ BASE_LR = 1e-3
 MIN_BASE_LR = 1e-5
 USE_AMP = True
 USE_EMA = True
-EMA_DECAY = 0.9998
+EMA_DECAY = 0.9997
 SAVE_DIR = config.experiments_dir / args.experiment
+
+CROP_SETTINGS = {
+    'ETT': {
+        'work': True,
+        'size_coef': 1.2,
+        'shift_x_coef': 0.0,
+        'shift_y_coef': -0.15
+    },
+    'NGT': {
+        'work': True,
+        'size_coef': 1.7,
+        'shift_x_coef': 0.0,
+        'shift_y_coef': 0.3
+    },
+    'CVC': {
+        'work': True,
+        'size_coef': 1.3,
+        'shift_x_coef': 0.0,
+        'shift_y_coef': 0.0
+    }
+}
+CROP_SETTINGS = {TASK: CROP_SETTINGS[TASK]}
 
 
 def get_lr(base_lr, batch_size):
@@ -45,17 +70,19 @@ PARAMS = {
     'nn_module': ('timm', {
         'model_name': 'tf_efficientnet_b3_ns',
         'pretrained': True,
-        'num_classes': config.n_classes,
+        'num_classes': config.n_sub_classes[TASK],
         'in_chans': 1,
         'drop_rate': 0.3,
         'drop_path_rate': 0.2
     }),
-    'loss': 'BinaryFocalLoss',
+    'loss': 'BCEWithLogitsLoss',
     'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
     'device': [f'cuda:{i}' for i in range(torch.cuda.device_count())],
     'amp': USE_AMP,
     'clip_grad': False,
-    'image_size': IMAGE_SIZE
+    'image_size': IMAGE_SIZE,
+    'task': TASK,
+    'crop_settings': CROP_SETTINGS
 }
 
 
@@ -75,9 +102,11 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
         train_transfrom = get_transforms(train=True, size=IMAGE_SIZE)
         val_transform = get_transforms(train=False, size=IMAGE_SIZE)
 
-        train_dataset = RanzcrDataset(folds_data, folds=train_folds,
+        train_dataset = RanzcrDataset(folds_data, CROP_SETTINGS,
+                                      folds=train_folds,
                                       transform=train_transfrom)
-        val_dataset = RanzcrDataset(folds_data, folds=val_folds,
+        val_dataset = RanzcrDataset(folds_data, CROP_SETTINGS,
+                                    folds=val_folds,
                                     transform=val_transform)
         train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
                                   shuffle=True, drop_last=True,
@@ -96,7 +125,8 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
                 CosineAnnealingLR(T_max=num_iterations,
                                   eta_min=get_lr(MIN_BASE_LR, BATCH_SIZE),
                                   step_on_iteration=True),
-                checkpoint(save_dir, monitor='val_roc_auc', max_saves=1)
+                checkpoint(save_dir, monitor=f'val_roc_auc_{TASK}',
+                           max_saves=1, better='max')
             ]
         elif stage == 'warmup':
             callbacks += [
@@ -108,7 +138,7 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
                   val_loader=val_loader,
                   num_epochs=num_epochs,
                   callbacks=callbacks,
-                  metrics=['roc_auc'])
+                  metrics=[RocAuc(task=TASK)])
 
 
 if __name__ == "__main__":
@@ -124,7 +154,7 @@ if __name__ == "__main__":
     with open(SAVE_DIR / 'params.json', 'w') as outfile:
         json.dump(PARAMS, outfile)
 
-    folds_data = get_folds_data()
+    folds_data = get_folds_data(config.segm_predictions_dir / SEGM_EXPERIMENT)
 
     if args.folds:
         folds = [int(fold) for fold in args.folds.split(',')]

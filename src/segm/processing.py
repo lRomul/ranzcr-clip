@@ -30,8 +30,21 @@ def get_region(area, centroid, size_coef=1.0,
     return left_top_x, left_top_y, right_bot_x, right_bot_y
 
 
-def croc_region(np_image, region):
+def crop_region(np_image, region):
     pil_image = Image.fromarray(np_image)
     pil_image = pil_image.crop(box=region)
     np_image = np.array(pil_image)
     return np_image
+
+
+def crop_region_by_mask(image, mask, size_coef=1.0,
+                        shift_x_coef=0.0, shift_y_coef=0.0):
+    area, centroid = mask2area_and_centroid(mask)
+    region = get_region(area, centroid, size_coef=size_coef,
+                        shift_x_coef=shift_x_coef, shift_y_coef=shift_y_coef)
+
+    mean_size = np.mean(image.shape)
+    region = relative2absolute(region, (mean_size, mean_size))
+
+    crop_image = crop_region(image, region)
+    return crop_image
