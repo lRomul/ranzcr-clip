@@ -149,7 +149,7 @@ class RanzcrDataset(Dataset):
             if self.segm:
                 image, target = self.transform(image, target)
             else:
-                image = self.transform(image)
+                image, _ = self.transform(image)
                 if isinstance(image, (tuple, list)) and len(image) == 1:
                     image = image[0]
                     if target is not None:
