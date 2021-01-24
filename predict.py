@@ -99,6 +99,6 @@ if __name__ == "__main__":
     print("Device", DEVICE)
     print("Batch size", BATCH_SIZE)
 
-    # segmentation_pred()
+    segmentation_pred()
     pred = classification_pred()
     make_submission(pred)
