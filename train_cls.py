@@ -26,9 +26,9 @@ parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
 SEGM_EXPERIMENT = 'segm_003'
-TASK = 'NGT'
-BATCH_SIZE = 16
-IMAGE_SIZE = 512
+TASK = 'CVC'
+BATCH_SIZE = 10
+IMAGE_SIZE = 1024
 NUM_WORKERS = 8
 NUM_EPOCHS = [2, 16]
 STAGE = ['warmup', 'train']
@@ -41,19 +41,19 @@ SAVE_DIR = config.experiments_dir / args.experiment
 
 CROP_SETTINGS = {
     'ETT': {
-        'work': False,
+        'work': True,
         'size_coef': 1.2,
         'shift_x_coef': 0.0,
         'shift_y_coef': -0.15
     },
     'NGT': {
-        'work': False,
+        'work': True,
         'size_coef': 1.7,
         'shift_x_coef': 0.0,
         'shift_y_coef': 0.3
     },
     'CVC': {
-        'work': False,
+        'work': True,
         'size_coef': 1.3,
         'shift_x_coef': 0.0,
         'shift_y_coef': 0.0
