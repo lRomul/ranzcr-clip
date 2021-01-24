@@ -154,7 +154,8 @@ if __name__ == "__main__":
     with open(SAVE_DIR / 'params.json', 'w') as outfile:
         json.dump(PARAMS, outfile)
 
-    folds_data = get_folds_data(config.segm_predictions_dir / SEGM_EXPERIMENT)
+    segm_predictions_dir = config.segm_predictions_dir / 'val' / SEGM_EXPERIMENT
+    folds_data = get_folds_data(lung_masks_dir=segm_predictions_dir)
 
     if args.folds:
         folds = [int(fold) for fold in args.folds.split(',')]

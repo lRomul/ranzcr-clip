@@ -21,7 +21,7 @@ DEVICE = 'cuda'
 
 def segmentation_pred():
     segm_experiment_dir = config.segm_experiments_dir / SEGM_EXPERIMENT
-    segm_prediction_dir = config.segm_predictions_dir / SEGM_EXPERIMENT
+    segm_prediction_dir = config.segm_predictions_dir / 'val' / SEGM_EXPERIMENT
     if segm_prediction_dir.exists():
         shutil.rmtree(segm_prediction_dir)
     segm_prediction_dir.mkdir(parents=True, exist_ok=True)

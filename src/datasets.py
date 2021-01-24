@@ -68,13 +68,17 @@ def draw_visualization(sample):
     return image
 
 
-def get_test_data():
+def get_test_data(lung_masks_dir=None):
     test_data = []
     for image_path in glob.glob(str(config.test_dir / "*.jpg")):
-        test_data.append({
+        sample = {
             'image_path': image_path,
-            'StudyInstanceUID': Path(image_path).stem
-        })
+            'StudyInstanceUID': Path(image_path).stem,
+        }
+        if lung_masks_dir is not None:
+            sample['lung_mask_path'] = str(Path(lung_masks_dir)
+                                           / Path(image_path).name)
+        test_data.append(sample)
     return test_data
 
 
@@ -149,11 +153,19 @@ class RanzcrDataset(Dataset):
             if self.segm:
                 image, target = self.transform(image, target)
             else:
-                image, _ = self.transform(image)
-                if isinstance(image, (tuple, list)) and len(image) == 1:
-                    image = image[0]
-                    if target is not None:
-                        target = target[0]
+                if isinstance(image, (tuple, list)):
+                    img_lst = []
+                    for i, img in enumerate(image):
+                        if isinstance(self.transform, (tuple, list)):
+                            img, _ = self.transform[i](img)
+                        else:
+                            img, _ = self.transform(img)
+                        img_lst.append(img)
+                    image = img_lst
+                    if len(image) == 1:
+                        image = image[0]
+                        if target is not None:
+                            target = target[0]
         if target is not None:
             return image, target
         else:
