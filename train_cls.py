@@ -26,7 +26,7 @@ parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
 SEGM_EXPERIMENT = 'segm_003'
-TASK = 'CVC'
+TASK = 'NGT'
 BATCH_SIZE = 32
 IMAGE_SIZE = 512
 NUM_WORKERS = 8
