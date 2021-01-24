@@ -27,10 +27,10 @@ args = parser.parse_args()
 
 SEGM_EXPERIMENT = 'segm_003'
 TASK = 'CVC'
-BATCH_SIZE = 10
-IMAGE_SIZE = 1024
+BATCH_SIZE = 32
+IMAGE_SIZE = 598
 NUM_WORKERS = 8
-NUM_EPOCHS = [2, 16]
+NUM_EPOCHS = [2, 24]
 STAGE = ['warmup', 'train']
 BASE_LR = 1e-3
 MIN_BASE_LR = 1e-5
@@ -41,13 +41,13 @@ SAVE_DIR = config.experiments_dir / args.experiment
 
 CROP_SETTINGS = {
     'ETT': {
-        'work': True,
+        'work': False,
         'size_coef': 1.2,
         'shift_x_coef': 0.0,
         'shift_y_coef': -0.15
     },
     'NGT': {
-        'work': True,
+        'work': False,
         'size_coef': 1.7,
         'shift_x_coef': 0.0,
         'shift_y_coef': 0.3
@@ -68,12 +68,11 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('timm', {
-        'model_name': 'tf_efficientnet_b3_ns',
+        'model_name': 'gluon_inception_v3',
         'pretrained': True,
         'num_classes': config.n_sub_classes[TASK],
         'in_chans': 1,
-        'drop_rate': 0.3,
-        'drop_path_rate': 0.2
+        'drop_rate': 0.2,
     }),
     'loss': 'BCEWithLogitsLoss',
     'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
