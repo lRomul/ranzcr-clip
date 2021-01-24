@@ -27,8 +27,8 @@ args = parser.parse_args()
 
 SEGM_EXPERIMENT = 'segm_003'
 TASK = 'CVC'
-BATCH_SIZE = 10
-IMAGE_SIZE = 1024
+BATCH_SIZE = 16
+IMAGE_SIZE = 768
 NUM_WORKERS = 8
 NUM_EPOCHS = [2, 16]
 STAGE = ['warmup', 'train']
