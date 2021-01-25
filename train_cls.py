@@ -47,7 +47,7 @@ CROP_SETTINGS = {
         'shift_y_coef': -0.15
     },
     'NGT': {
-        'work': True,
+        'work': False,
         'size_coef': 1.7,
         'shift_x_coef': 0.0,
         'shift_y_coef': 0.3
