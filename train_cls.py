@@ -26,8 +26,8 @@ parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
 SEGM_EXPERIMENT = 'segm_003'
-TASK = 'ETT'
-BATCH_SIZE = 16
+TASK = 'ALL'
+BATCH_SIZE = 12
 IMAGE_SIZE = 768
 NUM_WORKERS = 8
 NUM_EPOCHS = [2, 16]
@@ -46,18 +46,14 @@ CROP_SETTINGS = {
         'shift_x_coef': 0.0,
         'shift_y_coef': -0.15
     },
-    'NGT': {
-        'work': False,
-        'size_coef': 1.7,
-        'shift_x_coef': 0.0,
-        'shift_y_coef': 0.3
-    },
+    'NGT': {'work': False},
     'CVC': {
         'work': True,
         'size_coef': 1.3,
         'shift_x_coef': 0.0,
         'shift_y_coef': 0.0
-    }
+    },
+    'ALL': {'work': False}
 }
 CROP_SETTINGS = {TASK: CROP_SETTINGS[TASK]}
 
@@ -68,12 +64,11 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('timm', {
-        'model_name': 'tf_efficientnet_b3_ns',
+        'model_name': 'seresnet152d_320',
         'pretrained': True,
         'num_classes': config.n_sub_classes[TASK],
         'in_chans': 1,
         'drop_rate': 0.3,
-        'drop_path_rate': 0.2
     }),
     'loss': 'BCEWithLogitsLoss',
     'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),

@@ -73,7 +73,8 @@ sub_classes = {
         'CVC - Borderline',
         'CVC - Normal',
         'Swan Ganz Catheter Present'
-    ]
+    ],
+    'ALL': classes
 }
 
 sub_classes2sub_target = {
