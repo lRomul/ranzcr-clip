@@ -95,10 +95,10 @@ def make_submission(pred_dict):
 
     train_df = pd.read_csv(config.train_folds_path, index_col=0)
     train_df = train_df.loc[subm_df.index].copy()
-    sroces = roc_auc_score(train_df[config.classes].values,
+    scores = roc_auc_score(train_df[config.classes].values,
                            subm_df[config.classes].values, average=None)
-    scores_dict = {cls: scr for cls, scr in zip(config.classes, sroces)}
-    scores_dict['Overal'] = np.mean(sroces)
+    scores_dict = {cls: scr for cls, scr in zip(config.classes, scores)}
+    scores_dict['Overal'] = np.mean(scores)
 
     with open(val_prediction_dir / 'scores.json', 'w') as outfile:
         json.dump(scores_dict, outfile)
