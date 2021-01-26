@@ -39,7 +39,7 @@ def segmentation_pred():
     print(f"Segm experiment dir: {segm_experiment_dir}")
     print(f"Segm prediction dir: {SEGM_PREDICTION_DIR}")
 
-    for fold in args.folds:
+    for fold in config.folds:
         print("Predict fold", fold)
         folds_data = get_folds_data()
         folds_data = [s for s in folds_data if s['fold'] == fold]
@@ -61,7 +61,7 @@ def classification_pred():
     print(f"Start predict: {EXPERIMENT}")
 
     pred_dict = dict()
-    for fold in args.folds:
+    for fold in config.folds:
         print("Predict fold", fold)
         model_paths = [get_best_model_path(config.experiments_dir / e / f'fold_{fold}')
                        for e in [ETT_EXPERIMENT, NGT_EXPERIMENT, CVC_EXPERIMENT]]
