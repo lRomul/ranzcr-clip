@@ -1,8 +1,10 @@
 import cv2
+import json
 import shutil
 import argparse
 import numpy as np
 import pandas as pd
+from sklearn.metrics import roc_auc_score
 
 from src.predictor import Predictor
 from src.segm.predictor import SegmPredictor
@@ -17,7 +19,6 @@ parser.add_argument('--segm', required=True, type=str)
 parser.add_argument('--ett', required=True, type=str)
 parser.add_argument('--ngt', required=True, type=str)
 parser.add_argument('--cvc', required=True, type=str)
-parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
 SEGM_EXPERIMENT = args.segm
@@ -28,10 +29,6 @@ EXPERIMENT = "-".join([SEGM_EXPERIMENT, ETT_EXPERIMENT, NGT_EXPERIMENT, CVC_EXPE
 SEGM_PREDICTION_DIR = config.segm_predictions_dir / 'val' / SEGM_EXPERIMENT
 BATCH_SIZE = 8
 DEVICE = 'cuda'
-if args.folds:
-    FOLDS = [int(fold) for fold in args.folds.split(',')]
-else:
-    FOLDS = config.folds
 
 
 def segmentation_pred():
@@ -42,7 +39,7 @@ def segmentation_pred():
     print(f"Segm experiment dir: {segm_experiment_dir}")
     print(f"Segm prediction dir: {SEGM_PREDICTION_DIR}")
 
-    for fold in FOLDS:
+    for fold in args.folds:
         print("Predict fold", fold)
         folds_data = get_folds_data()
         folds_data = [s for s in folds_data if s['fold'] == fold]
@@ -63,8 +60,8 @@ def segmentation_pred():
 def classification_pred():
     print(f"Start predict: {EXPERIMENT}")
 
-    pred_lst = []
-    for fold in FOLDS:
+    pred_dict = dict()
+    for fold in args.folds:
         print("Predict fold", fold)
         model_paths = [get_best_model_path(config.experiments_dir / e / f'fold_{fold}')
                        for e in [ETT_EXPERIMENT, NGT_EXPERIMENT, CVC_EXPERIMENT]]
@@ -73,23 +70,38 @@ def classification_pred():
         predictor = Predictor(model_paths, BATCH_SIZE,
                               device=DEVICE, num_workers=8)
         folds_data = get_folds_data(lung_masks_dir=SEGM_PREDICTION_DIR)
+        folds_data = [s for s in folds_data if s['fold'] == fold]
+        study_ids = [s['StudyInstanceUID'] for s in folds_data]
 
         fold_pred = predictor.predict(folds_data)
-        pred_lst.append(fold_pred)
+        for study_id, row_pred in zip(study_ids, fold_pred):
+            pred_dict[study_id] = row_pred
 
-    pred = np.mean(pred_lst, axis=0)
-    return pred
+    return pred_dict
 
 
-def make_submission(pred):
+def make_submission(pred_dict):
     folds_data = get_folds_data()
     val_prediction_dir = config.predictions_dir / EXPERIMENT / 'val'
+    if val_prediction_dir.exists():
+        shutil.rmtree(val_prediction_dir)
     val_prediction_dir.mkdir(parents=True, exist_ok=True)
     study_ids = [s['StudyInstanceUID'] for s in folds_data]
+    pred = np.stack([pred_dict[s] for s in study_ids])
     subm_df = pd.DataFrame(index=study_ids, columns=config.classes)
     subm_df.index.name = 'StudyInstanceUID'
     subm_df.values[:] = pred
     subm_df.to_csv(val_prediction_dir / 'submission.csv')
+
+    train_df = pd.read_csv(config.train_folds_path, index_col=0)
+    train_df = train_df.loc[subm_df.index].copy()
+    sroces = roc_auc_score(train_df[config.classes].values,
+                           subm_df[config.classes].values, average=None)
+    scores_dict = {cls: scr for cls, scr in zip(config.classes, sroces)}
+    scores_dict['Overal'] = np.mean(sroces)
+
+    with open(val_prediction_dir / 'scores.json', 'w') as outfile:
+        json.dump(scores_dict, outfile)
 
 
 if __name__ == "__main__":
@@ -98,5 +110,5 @@ if __name__ == "__main__":
     print("Batch size", BATCH_SIZE)
 
     segmentation_pred()
-    pred = classification_pred()
-    make_submission(pred)
+    pred_dict = classification_pred()
+    make_submission(pred_dict)

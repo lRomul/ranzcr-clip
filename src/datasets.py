@@ -70,7 +70,7 @@ def draw_visualization(sample):
 
 def get_test_data(lung_masks_dir=None):
     test_data = []
-    for image_path in glob.glob(str(config.test_dir / "*.jpg")):
+    for image_path in sorted(glob.glob(str(config.test_dir / "*.jpg"))):
         sample = {
             'image_path': image_path,
             'StudyInstanceUID': Path(image_path).stem,
