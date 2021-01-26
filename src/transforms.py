@@ -29,6 +29,7 @@ def get_transforms(train: bool, size: int,
         transforms = Albumentations([
             alb.RandomResizedCrop(size, size, scale=(0.8, 1.0),
                                   interpolation=interpolation),
+            alb.HorizontalFlip(p=0.5),
             alb.RandomBrightnessContrast(p=0.2, brightness_limit=(-0.2, 0.2),
                                          contrast_limit=(-0.2, 0.2)),
             alb.ShiftScaleRotate(p=0.2, shift_limit=0.0625,
