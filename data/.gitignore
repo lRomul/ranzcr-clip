@@ -1,5 +1,6 @@
 *
 !.gitignore
+!corrections.csv
 !ranzcr-deps/
 !experiments/
 !segm/

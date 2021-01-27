@@ -13,7 +13,7 @@ def make_folds():
     random.seed(random_state)
     np.random.seed(random_state)
 
-    train_df = pd.read_csv(config.train_csv_path)
+    train_df = pd.read_csv(config.train_csv_path, index_col=0)
 
     patient_ids = sorted(train_df.PatientID.unique())
     kf = KFold(n_splits=config.n_folds, random_state=random_state, shuffle=True)
@@ -25,7 +25,13 @@ def make_folds():
 
     train_df['fold'] = train_df.PatientID.map(patient_id2fold)
 
-    train_df.to_csv(config.train_folds_path, index=False)
+    corrections_df = pd.read_csv(config.corrections_csv_path, index_col=0)
+
+    for study_id, row in corrections_df.iterrows():
+        train_df.loc[study_id, row.label] = 0
+        train_df.loc[study_id, row.new_label] = 1
+
+    train_df.to_csv(config.train_folds_path)
     print(f"Train folds saved to '{config.train_folds_path}'")
 
 
