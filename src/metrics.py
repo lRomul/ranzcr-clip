@@ -43,5 +43,6 @@ class RocAuc(Metric):
         state.metrics[f"{name_prefix}{self.name}{task}"] = np.mean(scores)
         if self.task:
             for trg, sub_cls in config.sub_target2sub_classes[self.task].items():
+                task = f"_{sub_cls.split(' - ')[0]}"
                 sub_cls = sub_cls.split(' - ')[-1].split(' ')[0]
                 state.metrics[f"{name_prefix}{self.name}{task}_{sub_cls}"] = scores[trg]

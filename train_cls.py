@@ -27,7 +27,7 @@ args = parser.parse_args()
 
 SEGM_EXPERIMENT = 'segm_003'
 TASK = 'ALL'
-BATCH_SIZE = 12
+BATCH_SIZE = 16
 IMAGE_SIZE = 768
 NUM_WORKERS = 8
 NUM_EPOCHS = [2, 16]
@@ -64,11 +64,12 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('timm', {
-        'model_name': 'seresnet152d_320',
+        'model_name': 'tf_efficientnet_b3_ns',
         'pretrained': True,
         'num_classes': config.n_sub_classes[TASK],
         'in_chans': 1,
         'drop_rate': 0.3,
+        'drop_path_rate': 0.2
     }),
     'loss': 'BCEWithLogitsLoss',
     'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
