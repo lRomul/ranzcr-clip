@@ -10,16 +10,16 @@ class Albumentations:
     def __init__(self, transforms, p=1.0):
         self.albumentations = alb.Compose(transforms, p=p)
 
-    def __call__(self, image, trg=None):
-        if trg is None:
+    def __call__(self, image, mask=None):
+        if mask is None:
             augmented = self.albumentations(image=image)
             image = augmented["image"]
-            return image, trg
+            return image
         else:
-            augmented = self.albumentations(image=image, mask=trg)
+            augmented = self.albumentations(image=image, mask=mask)
             image = augmented["image"]
-            trg = augmented["mask"]
-            return image, trg
+            mask = augmented["mask"]
+            return image, mask
 
 
 def get_transforms(train: bool, size: int,

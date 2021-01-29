@@ -15,17 +15,12 @@ from src import config
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--segm', required=True, type=str)
-parser.add_argument('--ett', required=True, type=str)
-parser.add_argument('--ngt', required=True, type=str)
-parser.add_argument('--cvc', required=True, type=str)
+parser.add_argument('--segm', default='', type=str)
+parser.add_argument('--cls', default='', type=str)
 args = parser.parse_args()
 
 SEGM_EXPERIMENT = args.segm
-ETT_EXPERIMENT = args.ett
-NGT_EXPERIMENT = args.ngt
-CVC_EXPERIMENT = args.cvc
-EXPERIMENT = "-".join([SEGM_EXPERIMENT, ETT_EXPERIMENT, NGT_EXPERIMENT, CVC_EXPERIMENT])
+CLS_EXPERIMENT = args.cls
 SEGM_PREDICTION_DIR = config.segm_predictions_dir / 'val' / SEGM_EXPERIMENT
 BATCH_SIZE = 8
 DEVICE = 'cuda'
@@ -58,16 +53,17 @@ def segmentation_pred():
 
 
 def classification_pred():
-    print(f"Start predict: {EXPERIMENT}")
+    print(f"Start predict: {CLS_EXPERIMENT}")
 
     pred_dict = dict()
     for fold in config.folds:
         print("Predict fold", fold)
-        model_paths = [get_best_model_path(config.experiments_dir / e / f'fold_{fold}')
-                       for e in [ETT_EXPERIMENT, NGT_EXPERIMENT, CVC_EXPERIMENT]]
-        print("Model path", model_paths)
+        model_path = get_best_model_path(
+            config.experiments_dir / CLS_EXPERIMENT / f'fold_{fold}'
+        )
+        print("Model path", model_path)
 
-        predictor = Predictor(model_paths, BATCH_SIZE,
+        predictor = Predictor(model_path, BATCH_SIZE,
                               device=DEVICE, num_workers=8)
         folds_data = get_folds_data(lung_masks_dir=SEGM_PREDICTION_DIR)
         folds_data = [s for s in folds_data if s['fold'] == fold]
@@ -82,7 +78,7 @@ def classification_pred():
 
 def make_submission(pred_dict):
     folds_data = get_folds_data()
-    val_prediction_dir = config.predictions_dir / EXPERIMENT / 'val'
+    val_prediction_dir = config.predictions_dir / CLS_EXPERIMENT / 'val'
     if val_prediction_dir.exists():
         shutil.rmtree(val_prediction_dir)
     val_prediction_dir.mkdir(parents=True, exist_ok=True)
@@ -109,6 +105,9 @@ if __name__ == "__main__":
     print("Device", DEVICE)
     print("Batch size", BATCH_SIZE)
 
-    segmentation_pred()
-    pred_dict = classification_pred()
-    make_submission(pred_dict)
+    if SEGM_EXPERIMENT:
+        segmentation_pred()
+
+    if CLS_EXPERIMENT:
+        pred_dict = classification_pred()
+        make_submission(pred_dict)

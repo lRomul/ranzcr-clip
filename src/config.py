@@ -56,33 +56,3 @@ for cls, color in zip(classes, plt.get_cmap('Set3').colors):
 n_classes = len(classes)
 n_folds = 5
 folds = list(range(n_folds))
-
-sub_classes = {
-    'ETT': [
-        'ETT - Abnormal',
-        'ETT - Borderline',
-        'ETT - Normal'
-    ],
-    'NGT': [
-        'NGT - Abnormal',
-        'NGT - Borderline',
-        'NGT - Incompletely Imaged',
-        'NGT - Normal'
-    ],
-    'CVC': [
-        'CVC - Abnormal',
-        'CVC - Borderline',
-        'CVC - Normal',
-        'Swan Ganz Catheter Present'
-    ],
-    'ALL': classes
-}
-
-sub_classes2sub_target = {
-    sub_cls: {cls: trg for trg, cls in enumerate(sub_classes[sub_cls])} for sub_cls in sub_classes
-}
-sub_target2sub_classes = {
-    sub_cls: {trg: cls for trg, cls in enumerate(sub_classes[sub_cls])} for sub_cls in sub_classes
-}
-
-n_sub_classes = {sun_cls: len(clss) for sun_cls, clss in sub_classes.items()}

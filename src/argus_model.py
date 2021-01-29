@@ -3,18 +3,11 @@ import timm
 
 import argus
 from argus.utils import deep_to, deep_detach
-from argus.loss import pytorch_losses
-
-from src.losses import SoftBCEWithLogitsLoss
 
 
 class RanzcrModel(argus.Model):
     nn_module = {
         "timm": timm.create_model
-    }
-    loss = {
-        'SoftBCEWithLogitsLoss': SoftBCEWithLogitsLoss,
-        **pytorch_losses
     }
     prediction_transform = torch.nn.Sigmoid
 

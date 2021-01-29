@@ -12,8 +12,7 @@ class RocAuc(Metric):
     name = 'roc_auc'
     better = 'max'
 
-    def __init__(self, task=''):
-        self.task = task
+    def __init__(self):
         self.predictions = []
         self.targets = []
 
@@ -39,10 +38,8 @@ class RocAuc(Metric):
         with torch.no_grad():
             scores = self.compute()
         name_prefix = f"{state.phase}_" if state.phase else ''
-        task = f"_{self.task}" if self.task else ''
-        state.metrics[f"{name_prefix}{self.name}{task}"] = np.mean(scores)
-        if self.task:
-            for trg, sub_cls in config.sub_target2sub_classes[self.task].items():
-                task = f"_{sub_cls.split(' - ')[0]}"
-                sub_cls = sub_cls.split(' - ')[-1].split(' ')[0]
-                state.metrics[f"{name_prefix}{self.name}{task}_{sub_cls}"] = scores[trg]
+        state.metrics[f"{name_prefix}{self.name}"] = np.mean(scores)
+        for trg, cls in config.target2class.items():
+            task = cls.split(' - ')[0].split(' ')[-1]
+            cls = cls.split(' - ')[-1].split(' ')[0]
+            state.metrics[f"{name_prefix}{self.name}_{task}_{cls}"] = scores[trg]
