@@ -4,7 +4,7 @@ import pandas as pd
 
 from src.predictor import Predictor
 from src.datasets import get_test_data
-from src.utils import get_best_model_path
+from src.utils import get_best_model_path, remove_than_make_dir
 
 from src import config
 
@@ -17,6 +17,8 @@ args = parser.parse_args()
 EXPERIMENT = args.experiment
 BATCH_SIZE = 4
 DEVICE = 'cuda'
+NUM_WORKERS = 2 if config.kernel_mode else 8
+TEST_PREDICTION_DIR = config.predictions_dir / EXPERIMENT / 'test'
 if args.folds:
     FOLDS = [int(fold) for fold in args.folds.split(',')]
 else:
@@ -35,10 +37,21 @@ def classification_pred():
         print("Model path", model_path)
 
         predictor = Predictor(model_path, BATCH_SIZE,
-                              device=DEVICE, num_workers=2)
+                              device=DEVICE, tta=True,
+                              num_workers=NUM_WORKERS)
         test_data = get_test_data()
 
         fold_pred = predictor.predict(test_data)
+        if not config.kernel_mode:
+            study_ids = [s['StudyInstanceUID'] for s in test_data]
+            fold_pred_dir = TEST_PREDICTION_DIR / f'fold_{fold}'
+            fold_pred_dir.mkdir(exist_ok=True, parents=True)
+            np.savez(
+                fold_pred_dir / 'preds.npz',
+                preds=fold_pred,
+                study_ids=study_ids,
+            )
+
         pred_lst.append(fold_pred)
 
     pred = np.mean(pred_lst, axis=0)
@@ -47,8 +60,6 @@ def classification_pred():
 
 def make_submission(pred):
     test_data = get_test_data()
-    test_prediction_dir = config.predictions_dir / EXPERIMENT / 'test'
-    test_prediction_dir.mkdir(parents=True, exist_ok=True)
     study_ids = [s['StudyInstanceUID'] for s in test_data]
     subm_df = pd.DataFrame(index=study_ids, columns=config.classes)
     subm_df.index.name = 'StudyInstanceUID'
@@ -56,12 +67,13 @@ def make_submission(pred):
     if config.kernel_mode:
         subm_df.to_csv('submission.csv')
     else:
-        subm_df.to_csv(test_prediction_dir / 'submission.csv')
+        subm_df.to_csv(TEST_PREDICTION_DIR / 'submission.csv')
 
 
 if __name__ == "__main__":
     print("Device", DEVICE)
     print("Batch size", BATCH_SIZE)
 
+    remove_than_make_dir(TEST_PREDICTION_DIR)
     pred = classification_pred()
     make_submission(pred)

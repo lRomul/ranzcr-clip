@@ -14,6 +14,16 @@ from src.folds import make_folds
 from src import config
 
 
+def load_pseudo_label(path):
+    pseudo_label_dict = dict()
+    if path is not None:
+        pseudo_label = np.load(path)
+        for study_id, pred in zip(pseudo_label['study_ids'],
+                                  pseudo_label['preds']):
+            pseudo_label_dict[study_id] = pred
+    return pseudo_label_dict
+
+
 def get_folds_data(lung_masks_dir=config.segm_train_lung_masks_dir,
                    pseudo_label_path=None):
     lung_masks_dir = Path(lung_masks_dir)
@@ -23,10 +33,7 @@ def get_folds_data(lung_masks_dir=config.segm_train_lung_masks_dir,
 
     pseudo_label_dict = dict()
     if pseudo_label_path is not None:
-        pseudo_label = np.load(pseudo_label_path)
-        for study_id, pred in zip(pseudo_label['study_ids'],
-                                  pseudo_label['preds']):
-            pseudo_label_dict[study_id] = pred
+        pseudo_label_dict = load_pseudo_label(pseudo_label_path)
 
     train_df = pd.read_csv(config.train_folds_path)
     train_dict = train_df.to_dict(orient='index')
@@ -92,16 +99,26 @@ def draw_visualization(sample):
     return image
 
 
-def get_test_data(lung_masks_dir=None):
+def get_test_data(lung_masks_dir=None, pseudo_label_path=None):
     test_data = []
+
+    pseudo_label_dict = dict()
+    if pseudo_label_path is not None:
+        pseudo_label_dict = load_pseudo_label(pseudo_label_path)
+
     for image_path in sorted(glob.glob(str(config.test_dir / "*.jpg"))):
+        study_id = Path(image_path).stem
         sample = {
             'image_path': image_path,
-            'StudyInstanceUID': Path(image_path).stem,
+            'StudyInstanceUID': study_id,
         }
         if lung_masks_dir is not None:
             sample['lung_mask_path'] = str(Path(lung_masks_dir)
                                            / Path(image_path).name)
+        if study_id in pseudo_label_dict:
+            sample['pseudo_label'] = pseudo_label_dict[study_id]
+        else:
+            sample['pseudo_label'] = None
         test_data.append(sample)
     return test_data
 

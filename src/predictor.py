@@ -12,7 +12,7 @@ class Predictor:
                  model_path,
                  batch_size,
                  device='cuda',
-                 tta=False,
+                 tta=True,
                  num_workers=0):
         self.model = load_model(model_path, device=device)
         self.batch_size = batch_size
