@@ -6,6 +6,7 @@ from argus import load_model
 from src.datasets import RanzcrDataset
 from src.transforms import get_transforms
 
+
 @torch.no_grad()
 def predict_data(data, model, batch_size, transform, tta, num_workers=0):
 

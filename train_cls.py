@@ -28,12 +28,13 @@ SEGM_EXPERIMENT = 'segm_003'
 BATCH_SIZE = 16
 IMAGE_SIZE = 768
 NUM_WORKERS = 8
-NUM_EPOCHS = [2, 16]
+NUM_EPOCHS = [2, 10]
 STAGE = ['warmup', 'train']
 BASE_LR = 1e-3
 MIN_BASE_LR = 1e-5
 USE_AMP = True
 USE_EMA = True
+DRAW_ANNOTATIONS = True
 EMA_DECAY = 0.9997
 SAVE_DIR = config.experiments_dir / args.experiment
 
@@ -47,7 +48,7 @@ PARAMS = {
         'model_name': 'tf_efficientnet_b3_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
-        'in_chans': 1,
+        'in_chans': 3,
         'drop_rate': 0.3,
         'drop_path_rate': 0.2
     }),
@@ -56,7 +57,8 @@ PARAMS = {
     'device': [f'cuda:{i}' for i in range(torch.cuda.device_count())],
     'amp': USE_AMP,
     'clip_grad': False,
-    'image_size': IMAGE_SIZE
+    'image_size': IMAGE_SIZE,
+    'draw_annotations': DRAW_ANNOTATIONS
 }
 
 
@@ -78,10 +80,12 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
 
         train_dataset = RanzcrDataset(folds_data,
                                       folds=train_folds,
-                                      transform=train_transfrom)
+                                      transform=train_transfrom,
+                                      annotations=DRAW_ANNOTATIONS)
         val_dataset = RanzcrDataset(folds_data,
                                     folds=val_folds,
-                                    transform=val_transform)
+                                    transform=val_transform,
+                                    annotations=DRAW_ANNOTATIONS)
         train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
                                   shuffle=True, drop_last=True,
                                   num_workers=NUM_WORKERS)

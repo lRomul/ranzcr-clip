@@ -10,7 +10,6 @@ from pathlib import Path
 import torch
 from torch.utils.data import Dataset
 
-from src.segm.processing import crop_region_by_mask
 from src.folds import make_folds
 from src import config
 
@@ -41,17 +40,28 @@ def get_folds_data(lung_masks_dir=config.segm_train_lung_masks_dir):
     return folds_data
 
 
-def draw_visualization(sample):
-    image = cv2.imread(sample['image_path'])
-    image = np.concatenate([image, image], axis=1)
-
-    annotations_set = set()
-    for annotation in sample['annotations']:
+def draw_annotations(image, annotations):
+    image = image.copy()
+    for annotation in annotations:
         color = config.class2color[annotation['label']]
         point_lst = annotation['data']
         for i in range(len(point_lst) - 1):
             cv2.line(image, (point_lst[i][0], point_lst[i][1]),
                      (point_lst[i + 1][0], point_lst[i + 1][1]), color, 10)
+
+
+def draw_mask(image, mask):
+    mask = cv2.resize(mask, image.shape[:2][::-1])
+    image[:, :, 0] = cv2.addWeighted(image[:, :, 0], 0.9, mask, 0.1, 0)
+
+
+def draw_visualization(sample):
+    image = cv2.imread(sample['image_path'])
+    image = draw_annotations(image, sample['annotations'])
+    image = np.concatenate([image, image], axis=1)
+
+    annotations_set = set()
+    for annotation in sample['annotations']:
         annotations_set.add(annotation['label'])
 
     for cls, trg in config.class2target.items():
@@ -88,12 +98,14 @@ class RanzcrDataset(Dataset):
                  folds=None,
                  transform=None,
                  return_target=True,
-                 segm=False):
+                 segm=False,
+                 annotations=False):
         self.data = data
         self.folds = folds
         self.transform = transform
         self.return_target = return_target
         self.segm = segm
+        self.annotations = annotations
         if folds is not None:
             self.data = [s for s in self.data if s['fold'] in folds]
 
@@ -107,7 +119,12 @@ class RanzcrDataset(Dataset):
 
     def _get_sample(self, index):
         sample = self.data[index]
-        image = cv2.imread(sample['image_path'], cv2.IMREAD_GRAYSCALE)
+        image = cv2.imread(sample['image_path'], cv2.IMREAD_COLOR)
+
+        if self.annotations:
+            mask = cv2.imread(sample['lung_mask_path'], cv2.IMREAD_GRAYSCALE)
+            draw_mask(image, mask)
+            draw_annotations(image, sample['annotations'])
 
         if not self.return_target:
             return image, None

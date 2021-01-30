@@ -39,13 +39,13 @@ def get_transforms(train: bool, size: int,
             alb.CoarseDropout(p=0.2),
             alb.Cutout(p=0.2, max_h_size=16, max_w_size=16,
                        fill_value=0., num_holes=16),
-            alb.Normalize(mean=[0.485], std=[0.229]),
+            alb.Normalize(),
             alb.pytorch.ToTensorV2()
         ])
     else:
         transforms = Albumentations([
             alb.Resize(size, size, interpolation=interpolation),
-            alb.Normalize(mean=[0.485], std=[0.229]),
+            alb.Normalize(),
             alb.pytorch.ToTensorV2()
         ])
     return transforms
