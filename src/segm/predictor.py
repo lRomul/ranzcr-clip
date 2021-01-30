@@ -18,6 +18,7 @@ class SegmPredictor:
         self.num_workers = num_workers
         self.transform = get_transforms(False,
                                         self.model.params['image_size'])
+        self.rgb = self.model.params['nn_module'][1]['in_channels'] == 3
 
     @torch.no_grad()
     def predict(self, data):
@@ -25,7 +26,8 @@ class SegmPredictor:
                                 return_target=False,
                                 folds=None,
                                 transform=self.transform,
-                                segm=True)
+                                segm=True,
+                                rgb=self.rgb)
         loader = DataLoader(dataset,
                             batch_size=self.batch_size,
                             shuffle=False,

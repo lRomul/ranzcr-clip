@@ -24,6 +24,7 @@ class Predictor:
         self.num_workers = num_workers
         self.use_prediction_transform = use_prediction_transform
         self.draw_annotations = self.model.params['draw_annotations']
+        self.rgb = self.model.params['nn_module'][1]['in_chans'] == 3
 
     @torch.no_grad()
     def predict(self, data):
@@ -31,7 +32,8 @@ class Predictor:
                                 return_target=False,
                                 folds=None,
                                 transform=self.transform,
-                                annotations=self.draw_annotations)
+                                annotations=self.draw_annotations,
+                                rgb=self.rgb)
         loader = DataLoader(dataset,
                             batch_size=self.batch_size,
                             shuffle=False,

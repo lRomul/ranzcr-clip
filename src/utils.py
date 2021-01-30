@@ -1,4 +1,5 @@
 import re
+import shutil
 from pathlib import Path
 import matplotlib.pyplot as plt
 
@@ -31,3 +32,9 @@ def get_best_model_path(dir_path, return_score=False):
         return best_model_path, best_score
     else:
         return best_model_path
+
+
+def remove_than_make_dir(dir_path):
+    if dir_path.exists():
+        shutil.rmtree(dir_path)
+    dir_path.mkdir(parents=True, exist_ok=True)

@@ -1,7 +1,6 @@
 import cv2
 import json
 import torch
-import shutil
 import argparse
 import numpy as np
 import pandas as pd
@@ -10,7 +9,7 @@ from sklearn.metrics import roc_auc_score
 from src.predictor import Predictor
 from src.segm.predictor import SegmPredictor
 from src.datasets import get_folds_data
-from src.utils import get_best_model_path
+from src.utils import get_best_model_path, remove_than_make_dir
 
 from src import config
 
@@ -23,15 +22,13 @@ args = parser.parse_args()
 SEGM_EXPERIMENT = args.segm
 CLS_EXPERIMENT = args.cls
 SEGM_PREDICTION_DIR = config.segm_predictions_dir / 'val' / SEGM_EXPERIMENT
+VAL_PREDICTION_DIR = config.predictions_dir / CLS_EXPERIMENT / 'val'
 BATCH_SIZE = 8
 DEVICE = 'cuda'
 
 
 def segmentation_pred():
     segm_experiment_dir = config.segm_experiments_dir / SEGM_EXPERIMENT
-    if SEGM_PREDICTION_DIR.exists():
-        shutil.rmtree(SEGM_PREDICTION_DIR)
-    SEGM_PREDICTION_DIR.mkdir(parents=True, exist_ok=True)
     print(f"Segm experiment dir: {segm_experiment_dir}")
     print(f"Segm prediction dir: {SEGM_PREDICTION_DIR}")
 
@@ -77,7 +74,7 @@ def classification_pred():
 
     study_ids = [s['StudyInstanceUID'] for s in get_folds_data()]
     np.savez(
-        config.predictions_dir / CLS_EXPERIMENT / 'val' / 'logits.npz',
+        VAL_PREDICTION_DIR / 'logits.npz',
         logits=np.stack([pred_dict[sid] for sid in study_ids]),
         study_ids=study_ids,
     )
@@ -87,17 +84,13 @@ def classification_pred():
 
 def make_submission(pred_dict):
     folds_data = get_folds_data()
-    val_prediction_dir = config.predictions_dir / CLS_EXPERIMENT / 'val'
-    if val_prediction_dir.exists():
-        shutil.rmtree(val_prediction_dir)
-    val_prediction_dir.mkdir(parents=True, exist_ok=True)
     study_ids = [s['StudyInstanceUID'] for s in folds_data]
     pred = np.stack([pred_dict[s] for s in study_ids])
     pred = torch.sigmoid(torch.from_numpy(pred)).numpy()
     subm_df = pd.DataFrame(index=study_ids, columns=config.classes)
     subm_df.index.name = 'StudyInstanceUID'
     subm_df.values[:] = pred
-    subm_df.to_csv(val_prediction_dir / 'submission.csv')
+    subm_df.to_csv(VAL_PREDICTION_DIR / 'submission.csv')
 
     train_df = pd.read_csv(config.train_folds_path, index_col=0)
     train_df = train_df.loc[subm_df.index].copy()
@@ -106,7 +99,7 @@ def make_submission(pred_dict):
     scores_dict = {cls: scr for cls, scr in zip(config.classes, scores)}
     scores_dict['Overal'] = np.mean(scores)
 
-    with open(val_prediction_dir / 'scores.json', 'w') as outfile:
+    with open(VAL_PREDICTION_DIR / 'scores.json', 'w') as outfile:
         json.dump(scores_dict, outfile)
 
 
@@ -116,8 +109,10 @@ if __name__ == "__main__":
     print("Batch size", BATCH_SIZE)
 
     if SEGM_EXPERIMENT:
+        remove_than_make_dir(SEGM_PREDICTION_DIR)
         segmentation_pred()
 
     if CLS_EXPERIMENT:
+        remove_than_make_dir(VAL_PREDICTION_DIR)
         pred_dict = classification_pred()
         make_submission(pred_dict)
