@@ -61,7 +61,7 @@ class RanzcrModel(argus.Model):
                 'loss': loss.item()
             }
 
-    def predict(self, input):
+    def predict(self, input, use_transform=True):
         self._check_predict_ready()
         with torch.no_grad():
             self.eval()
@@ -70,5 +70,6 @@ class RanzcrModel(argus.Model):
                 prediction = self.nn_module(input)
             else:
                 prediction = self.model_ema.ema(input)
-            prediction = self.prediction_transform(prediction)
+            if use_transform:
+                prediction = self.prediction_transform(prediction)
             return prediction
