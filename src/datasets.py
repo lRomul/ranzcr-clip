@@ -14,20 +14,34 @@ from src.folds import make_folds
 from src import config
 
 
-def get_folds_data(lung_masks_dir=config.segm_train_lung_masks_dir):
+def get_folds_data(lung_masks_dir=config.segm_train_lung_masks_dir,
+                   pseudo_label_path=None):
     lung_masks_dir = Path(lung_masks_dir)
 
     if not config.train_folds_path.exists():
         make_folds()
 
+    pseudo_label_dict = dict()
+    if pseudo_label_path is not None:
+        pseudo_label = np.load(pseudo_label_path)
+        for study_id, pred in zip(pseudo_label['study_ids'],
+                                  pseudo_label['logits']):
+            pseudo_label_dict[study_id] = pred
+
     train_df = pd.read_csv(config.train_folds_path)
     train_dict = train_df.to_dict(orient='index')
     folds_dict = dict()
     for _, sample in train_dict.items():
-        image_name = sample['StudyInstanceUID'] + '.jpg'
+        study_id = sample['StudyInstanceUID']
+        image_name = study_id + '.jpg'
         sample['image_path'] = str(config.train_dir / image_name)
         sample['lung_mask_path'] = str(lung_masks_dir / image_name)
         sample['annotations'] = list()
+        if study_id in pseudo_label_dict:
+            sample['pseudo_label'] = pseudo_label_dict[study_id]
+        else:
+            sample['pseudo_label'] = None
+
         folds_dict[sample['StudyInstanceUID']] = sample
     train_annotations_df = pd.read_csv(config.train_annotations_csv_path)
     for ann_sample in train_annotations_df.to_dict(orient='index').values():
@@ -100,6 +114,7 @@ class RanzcrDataset(Dataset):
                  return_target=True,
                  segm=False,
                  annotations=False,
+                 pseudo_label=False,
                  rgb=False):
         self.data = data
         self.folds = folds
@@ -108,6 +123,7 @@ class RanzcrDataset(Dataset):
         self.segm = segm
         self.annotations = annotations
         self.rgb = rgb
+        self.pseudo_label = pseudo_label
         if folds is not None:
             self.data = [s for s in self.data if s['fold'] in folds]
         if self.annotations:
@@ -140,6 +156,8 @@ class RanzcrDataset(Dataset):
             target = cv2.imread(sample['lung_mask_path'], cv2.IMREAD_GRAYSCALE)
             target = (target > 128).astype('float32')
             target = target[..., np.newaxis]
+        elif self.pseudo_label:
+            target = torch.from_numpy(sample['pseudo_label'].astype('float32'))
         else:
             target = torch.zeros(config.n_classes, dtype=torch.float32)
             for cls in config.classes:
