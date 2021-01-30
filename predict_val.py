@@ -1,6 +1,5 @@
 import cv2
 import json
-import torch
 import argparse
 import numpy as np
 import pandas as pd
@@ -62,8 +61,7 @@ def classification_pred():
         print("Model path", model_path)
 
         predictor = Predictor(model_path, BATCH_SIZE,
-                              device=DEVICE, num_workers=8,
-                              tta=True, use_prediction_transform=False)
+                              device=DEVICE, num_workers=8, tta=True)
         folds_data = get_folds_data(lung_masks_dir=SEGM_PREDICTION_DIR)
         folds_data = [s for s in folds_data if s['fold'] == fold]
         study_ids = [s['StudyInstanceUID'] for s in folds_data]
@@ -74,7 +72,7 @@ def classification_pred():
 
     study_ids = [s['StudyInstanceUID'] for s in get_folds_data()]
     np.savez(
-        VAL_PREDICTION_DIR / 'logits.npz',
+        VAL_PREDICTION_DIR / 'preds.npz',
         logits=np.stack([pred_dict[sid] for sid in study_ids]),
         study_ids=study_ids,
     )
@@ -86,7 +84,6 @@ def make_submission(pred_dict):
     folds_data = get_folds_data()
     study_ids = [s['StudyInstanceUID'] for s in folds_data]
     pred = np.stack([pred_dict[s] for s in study_ids])
-    pred = torch.sigmoid(torch.from_numpy(pred)).numpy()
     subm_df = pd.DataFrame(index=study_ids, columns=config.classes)
     subm_df.index.name = 'StudyInstanceUID'
     subm_df.values[:] = pred

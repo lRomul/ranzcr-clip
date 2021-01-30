@@ -14,7 +14,6 @@ class Predictor:
                  batch_size,
                  device='cuda',
                  tta=False,
-                 use_prediction_transform=True,
                  num_workers=0):
         self.model: RanzcrModel = load_model(model_path, device=device)
         self.batch_size = batch_size
@@ -22,7 +21,6 @@ class Predictor:
                                         self.model.params['image_size'])
         self.tta = tta
         self.num_workers = num_workers
-        self.use_prediction_transform = use_prediction_transform
         self.draw_annotations = self.model.params['draw_annotations']
         self.rgb = self.model.params['nn_module'][1]['in_chans'] == 3
 
@@ -41,10 +39,7 @@ class Predictor:
 
         preds_lst = []
         for batch in loader:
-            pred = self.model.predict(
-                batch,
-                use_transform=self.use_prediction_transform
-            )
+            pred = self.model.predict(batch)
 
             if self.tta:
                 hflip_batch = torch.flip(batch, [3])
