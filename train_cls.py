@@ -25,6 +25,7 @@ parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
 SEGM_EXPERIMENT = 'segm_003'
+PSEUDO_EXPERIMENT = 'anno_003'
 BATCH_SIZE = 16
 IMAGE_SIZE = 768
 NUM_WORKERS = 8
@@ -37,6 +38,11 @@ USE_EMA = True
 DRAW_ANNOTATIONS = True
 EMA_DECAY = 0.9997
 SAVE_DIR = config.experiments_dir / args.experiment
+
+if PSEUDO_EXPERIMENT:
+    PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'val' / 'preds.npz'
+else:
+    PSEUDO = None
 
 
 def get_lr(base_lr, batch_size):
@@ -81,7 +87,8 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
         train_dataset = RanzcrDataset(folds_data,
                                       folds=train_folds,
                                       transform=train_transfrom,
-                                      annotations=DRAW_ANNOTATIONS)
+                                      annotations=DRAW_ANNOTATIONS,
+                                      pseudo_label=PSEUDO is not None)
         val_dataset = RanzcrDataset(folds_data,
                                     folds=val_folds,
                                     transform=val_transform,
@@ -133,7 +140,8 @@ if __name__ == "__main__":
         json.dump(PARAMS, outfile)
 
     segm_predictions_dir = config.segm_predictions_dir / 'val' / SEGM_EXPERIMENT
-    folds_data = get_folds_data(lung_masks_dir=segm_predictions_dir)
+    folds_data = get_folds_data(lung_masks_dir=segm_predictions_dir,
+                                pseudo_label_path=PSEUDO)
 
     if args.folds:
         folds = [int(fold) for fold in args.folds.split(',')]

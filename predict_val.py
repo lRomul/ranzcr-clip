@@ -73,7 +73,7 @@ def classification_pred():
     study_ids = [s['StudyInstanceUID'] for s in get_folds_data()]
     np.savez(
         VAL_PREDICTION_DIR / 'preds.npz',
-        logits=np.stack([pred_dict[sid] for sid in study_ids]),
+        preds=np.stack([pred_dict[sid] for sid in study_ids]),
         study_ids=study_ids,
     )
 

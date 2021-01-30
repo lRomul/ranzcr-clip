@@ -25,7 +25,7 @@ def get_folds_data(lung_masks_dir=config.segm_train_lung_masks_dir,
     if pseudo_label_path is not None:
         pseudo_label = np.load(pseudo_label_path)
         for study_id, pred in zip(pseudo_label['study_ids'],
-                                  pseudo_label['logits']):
+                                  pseudo_label['preds']):
             pseudo_label_dict[study_id] = pred
 
     train_df = pd.read_csv(config.train_folds_path)
