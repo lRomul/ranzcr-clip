@@ -35,7 +35,7 @@ BASE_LR = 1e-3
 MIN_BASE_LR = 1e-5
 USE_AMP = True
 USE_EMA = True
-DRAW_ANNOTATIONS = True
+DRAW_ANNOTATIONS = False
 EMA_DECAY = 0.9997
 SAVE_DIR = config.experiments_dir / args.experiment
 
@@ -43,6 +43,7 @@ if PSEUDO_EXPERIMENT:
     PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'val' / 'preds.npz'
 else:
     PSEUDO = None
+N_CHANNELS = 3 if DRAW_ANNOTATIONS else 1
 
 
 def get_lr(base_lr, batch_size):
@@ -54,7 +55,7 @@ PARAMS = {
         'model_name': 'tf_efficientnet_b3_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
-        'in_chans': 3,
+        'in_chans': N_CHANNELS,
         'drop_rate': 0.3,
         'drop_path_rate': 0.2
     }),
@@ -81,8 +82,10 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
         checkpoint = MonitorCheckpoint
 
     for num_epochs, stage in zip(NUM_EPOCHS, STAGE):
-        train_transfrom = get_transforms(train=True, size=IMAGE_SIZE)
-        val_transform = get_transforms(train=False, size=IMAGE_SIZE)
+        train_transfrom = get_transforms(train=True, size=IMAGE_SIZE,
+                                         n_channels=N_CHANNELS)
+        val_transform = get_transforms(train=False, size=IMAGE_SIZE,
+                                       n_channels=N_CHANNELS)
 
         train_dataset = RanzcrDataset(folds_data,
                                       folds=train_folds,

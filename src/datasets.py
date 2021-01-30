@@ -114,20 +114,16 @@ class RanzcrDataset(Dataset):
                  return_target=True,
                  segm=False,
                  annotations=False,
-                 pseudo_label=False,
-                 rgb=False):
+                 pseudo_label=False):
         self.data = data
         self.folds = folds
         self.transform = transform
         self.return_target = return_target
         self.segm = segm
         self.annotations = annotations
-        self.rgb = rgb
         self.pseudo_label = pseudo_label
         if folds is not None:
             self.data = [s for s in self.data if s['fold'] in folds]
-        if self.annotations:
-            assert self.rgb
 
     def __len__(self):
         return len(self.data)
@@ -139,15 +135,14 @@ class RanzcrDataset(Dataset):
 
     def _get_sample(self, index):
         sample = self.data[index]
-        if self.rgb:
-            image = cv2.imread(sample['image_path'], cv2.IMREAD_COLOR)
-        else:
-            image = cv2.imread(sample['image_path'], cv2.IMREAD_GRAYSCALE)
 
         if self.annotations:
+            image = cv2.imread(sample['image_path'], cv2.IMREAD_COLOR)
             mask = cv2.imread(sample['lung_mask_path'], cv2.IMREAD_GRAYSCALE)
             draw_mask(image, mask)
             draw_annotations(image, sample['annotations'])
+        else:
+            image = cv2.imread(sample['image_path'], cv2.IMREAD_GRAYSCALE)
 
         if not self.return_target:
             return image, None

@@ -22,9 +22,11 @@ class Albumentations:
             return image, mask
 
 
-def get_transforms(train: bool, size: int,
+def get_transforms(train: bool, size: int, n_channels: int,
                    interpolation=cv2.INTER_CUBIC,
                    border_mode=cv2.BORDER_CONSTANT):
+    mean = (0.485, 0.456, 0.406)
+    std = (0.229, 0.224, 0.225)
     if train:
         transforms = Albumentations([
             alb.RandomResizedCrop(size, size, scale=(0.8, 1.0),
@@ -39,13 +41,13 @@ def get_transforms(train: bool, size: int,
             alb.CoarseDropout(p=0.2),
             alb.Cutout(p=0.2, max_h_size=16, max_w_size=16,
                        fill_value=0., num_holes=16),
-            alb.Normalize(),
+            alb.Normalize(mean=mean[:n_channels], std=[std[:n_channels]]),
             alb.pytorch.ToTensorV2()
         ])
     else:
         transforms = Albumentations([
             alb.Resize(size, size, interpolation=interpolation),
-            alb.Normalize(),
+            alb.Normalize(mean=mean[:n_channels], std=[std[:n_channels]]),
             alb.pytorch.ToTensorV2()
         ])
     return transforms
