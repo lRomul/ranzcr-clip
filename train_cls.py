@@ -25,12 +25,12 @@ parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
 SEGM_EXPERIMENT = 'segm_003'
-PSEUDO_EXPERIMENT = 'anno_003'
+PSEUDO_EXPERIMENT = ''
 BATCH_SIZE = 16
 IMAGE_SIZE = 768
 NUM_WORKERS = 8
-NUM_EPOCHS = [2, 16, 3]
-STAGE = ['warmup', 'train', 'cooldown']
+NUM_EPOCHS = [2, 16]  # , 3]
+STAGE = ['warmup', 'train']  # , 'cooldown']
 BASE_LR = 1e-3
 MIN_BASE_LR = 1e-5
 USE_AMP = True
