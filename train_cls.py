@@ -29,8 +29,8 @@ PSEUDO_EXPERIMENT = 'anno_003'
 BATCH_SIZE = 16
 IMAGE_SIZE = 768
 NUM_WORKERS = 8
-NUM_EPOCHS = [2, 16]
-STAGE = ['warmup', 'train']
+NUM_EPOCHS = [2, 16, 3]
+STAGE = ['warmup', 'train', 'cooldown']
 BASE_LR = 1e-3
 MIN_BASE_LR = 1e-5
 USE_AMP = True
@@ -87,11 +87,13 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
         val_transform = get_transforms(train=False, size=IMAGE_SIZE,
                                        n_channels=N_CHANNELS)
 
+        pseudo = stage != 'cooldown' and PSEUDO is not None
+        print(f"Pseudo label: {pseudo}, draw annotations: {DRAW_ANNOTATIONS}")
         train_dataset = RanzcrDataset(folds_data,
                                       folds=train_folds,
                                       transform=train_transfrom,
                                       annotations=DRAW_ANNOTATIONS,
-                                      pseudo_label=PSEUDO is not None)
+                                      pseudo_label=pseudo)
         val_dataset = RanzcrDataset(folds_data,
                                     folds=val_folds,
                                     transform=val_transform,
@@ -108,7 +110,12 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
         ]
 
         num_iterations = (len(train_dataset) // BATCH_SIZE) * num_epochs
-        if stage == 'train':
+        if stage == 'warmup':
+            callbacks += [
+                LambdaLR(lambda x: x / num_iterations,
+                         step_on_iteration=True)
+            ]
+        elif stage == 'train':
             callbacks += [
                 CosineAnnealingLR(T_max=num_iterations,
                                   eta_min=get_lr(MIN_BASE_LR, BATCH_SIZE),
@@ -116,10 +123,10 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
                 checkpoint(save_dir, monitor=f'val_roc_auc',
                            max_saves=1, better='max')
             ]
-        elif stage == 'warmup':
+        elif stage == 'cooldown':
             callbacks += [
-                LambdaLR(lambda x: x / num_iterations,
-                         step_on_iteration=True)
+                checkpoint(save_dir, monitor=f'val_roc_auc',
+                           max_saves=1, better='max')
             ]
 
         model.fit(train_loader,
