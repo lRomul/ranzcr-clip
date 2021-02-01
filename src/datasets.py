@@ -123,6 +123,28 @@ def get_test_data(lung_masks_dir=None, pseudo_label_path=None):
     return test_data
 
 
+def get_chest_xrays_data(pseudo_label_path=None):
+    test_data = []
+
+    pseudo_label_dict = dict()
+    if pseudo_label_path is not None:
+        pseudo_label_dict = load_pseudo_label(pseudo_label_path)
+
+    dir_path = config.nih_chest_xrays_dir / 'images_*' / 'images' /"*.png"
+    for image_path in sorted(glob.glob(str(dir_path))):
+        study_id = Path(image_path).stem
+        sample = {
+            'image_path': image_path,
+            'StudyInstanceUID': study_id,
+        }
+        if study_id in pseudo_label_dict:
+            sample['pseudo_label'] = pseudo_label_dict[study_id]
+        else:
+            sample['pseudo_label'] = None
+        test_data.append(sample)
+    return test_data
+
+
 class RanzcrDataset(Dataset):
     def __init__(self,
                  data,
