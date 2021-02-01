@@ -2,7 +2,7 @@ import json
 import argparse
 
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
 
 from argus.callbacks import (
     MonitorCheckpoint,
@@ -12,7 +12,7 @@ from argus.callbacks import (
     LambdaLR
 )
 
-from src.datasets import RanzcrDataset, get_folds_data
+from src.datasets import RanzcrDataset, get_folds_data, get_test_data
 from src.transforms import get_transforms
 from src.argus_model import RanzcrModel
 from src.ema import EmaMonitorCheckpoint, ModelEma
@@ -26,6 +26,7 @@ args = parser.parse_args()
 
 SEGM_EXPERIMENT = 'segm_003'
 PSEUDO_EXPERIMENT = 'noan_001'
+PSEUDO_THRESHOLD = 0.5
 BATCH_SIZE = 16
 IMAGE_SIZE = 768
 NUM_WORKERS = 8
@@ -41,8 +42,10 @@ SAVE_DIR = config.experiments_dir / args.experiment
 
 if PSEUDO_EXPERIMENT:
     PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'val' / 'preds.npz'
+    TEST_PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'test'
 else:
     PSEUDO = None
+    TEST_PSEUDO = None
 N_CHANNELS = 3 if DRAW_ANNOTATIONS else 1
 
 
@@ -89,11 +92,22 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
 
         pseudo = stage != 'cooldown' and PSEUDO is not None
         print(f"Pseudo label: {pseudo}, draw annotations: {DRAW_ANNOTATIONS}")
+
+        test_data = get_test_data(
+            pseudo_label_path=TEST_PSEUDO / f'fold_{val_folds[0]}' / 'preds.npz'
+        )
+        test_dataset = RanzcrDataset(test_data,
+                                     transform=train_transfrom,
+                                     annotations=DRAW_ANNOTATIONS,
+                                     pseudo_label=pseudo,
+                                     pseudo_threshold=PSEUDO_THRESHOLD)
         train_dataset = RanzcrDataset(folds_data,
                                       folds=train_folds,
                                       transform=train_transfrom,
-                                      annotations=DRAW_ANNOTATIONS,
-                                      pseudo_label=pseudo)
+                                      annotations=DRAW_ANNOTATIONS)
+
+        train_dataset = ConcatDataset([test_dataset, train_dataset])
+
         val_dataset = RanzcrDataset(folds_data,
                                     folds=val_folds,
                                     transform=val_transform,

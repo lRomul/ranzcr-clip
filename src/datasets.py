@@ -131,7 +131,8 @@ class RanzcrDataset(Dataset):
                  return_target=True,
                  segm=False,
                  annotations=False,
-                 pseudo_label=False):
+                 pseudo_label=False,
+                 pseudo_threshold=None):
         self.data = data
         self.folds = folds
         self.transform = transform
@@ -139,6 +140,7 @@ class RanzcrDataset(Dataset):
         self.segm = segm
         self.annotations = annotations
         self.pseudo_label = pseudo_label
+        self.pseudo_threshold = pseudo_threshold
         if folds is not None:
             self.data = [s for s in self.data if s['fold'] in folds]
 
@@ -169,7 +171,10 @@ class RanzcrDataset(Dataset):
             target = (target > 128).astype('float32')
             target = target[..., np.newaxis]
         elif self.pseudo_label:
-            target = torch.from_numpy(sample['pseudo_label'].astype('float32'))
+            target = sample['pseudo_label']
+            if self.pseudo_threshold is not None:
+                target = target > self.pseudo_threshold
+            target = torch.from_numpy(target.astype('float32'))
         else:
             target = torch.zeros(config.n_classes, dtype=torch.float32)
             for cls in config.classes:
