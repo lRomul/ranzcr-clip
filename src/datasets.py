@@ -154,7 +154,8 @@ class RanzcrDataset(Dataset):
                  segm=False,
                  annotations=False,
                  pseudo_label=False,
-                 pseudo_threshold=None):
+                 pseudo_threshold=None,
+                 length=None):
         self.data = data
         self.folds = folds
         self.transform = transform
@@ -163,11 +164,15 @@ class RanzcrDataset(Dataset):
         self.annotations = annotations
         self.pseudo_label = pseudo_label
         self.pseudo_threshold = pseudo_threshold
+        self.length = length
         if folds is not None:
             self.data = [s for s in self.data if s['fold'] in folds]
 
     def __len__(self):
-        return len(self.data)
+        if self.length is None:
+            return len(self.data)
+        else:
+            return self.length
 
     def _set_random_seed(self, index):
         seed = int(time.time() * 1000.0) + index
@@ -206,6 +211,8 @@ class RanzcrDataset(Dataset):
 
     def __getitem__(self, index):
         self._set_random_seed(index)
+        if self.length is not None:
+            index = np.random.randint(len(self.data))
         image, target = self._get_sample(index)
         if self.transform is not None:
             if self.segm and self.return_target:
