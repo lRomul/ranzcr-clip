@@ -15,8 +15,7 @@ from argus.callbacks import (
 from src.datasets import (
     RanzcrDataset,
     get_folds_data,
-    get_test_data,
-    get_chest_xrays_data
+    get_test_data
 )
 from src.transforms import get_transforms
 from src.argus_model import RanzcrModel
@@ -30,13 +29,13 @@ parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
 SEGM_EXPERIMENT = 'segm_003'
-PSEUDO_EXPERIMENT = 'noan_001'
+PSEUDO_EXPERIMENT = ''
 PSEUDO_THRESHOLD = 0.5
 BATCH_SIZE = 16
 IMAGE_SIZE = 768
 NUM_WORKERS = 8
-NUM_EPOCHS = [2, 16, 3]
-STAGE = ['warmup', 'train', 'cooldown']
+NUM_EPOCHS = [2, 16]  # , 3]
+STAGE = ['warmup', 'train']  # , 'cooldown']
 BASE_LR = 1e-3
 MIN_BASE_LR = 1e-5
 USE_AMP = True
@@ -48,7 +47,6 @@ SAVE_DIR = config.experiments_dir / args.experiment
 if PSEUDO_EXPERIMENT:
     PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'val' / 'preds.npz'
     TEST_PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'test'
-    XRAYS_PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'chest_xrays'
 else:
     PSEUDO = None
     TEST_PSEUDO = None
@@ -61,13 +59,14 @@ def get_lr(base_lr, batch_size):
 
 
 PARAMS = {
-    'nn_module': ('timm', {
+    'nn_module': ('TimmModel', {
         'model_name': 'tf_efficientnet_b3_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
         'drop_rate': 0.3,
-        'drop_path_rate': 0.2
+        'drop_path_rate': 0.2,
+        'attention': {'kernel_size': 7}
     }),
     'loss': 'BCEWithLogitsLoss',
     'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
@@ -105,20 +104,12 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
             test_data = get_test_data(
                 pseudo_label_path=TEST_PSEUDO / f'fold_{val_folds[0]}' / 'preds.npz'
             )
-            # xrays_data = get_chest_xrays_data(
-            #     pseudo_label_path=XRAYS_PSEUDO / f'fold_{val_folds[0]}' / 'preds.npz'
-            # )
             test_dataset = RanzcrDataset(test_data,
                                          transform=train_transfrom,
                                          annotations=DRAW_ANNOTATIONS,
                                          pseudo_label=pseudo,
                                          pseudo_threshold=PSEUDO_THRESHOLD)
-            # xrays_dataset = RanzcrDataset(xrays_data, length=25000,
-            #                               transform=train_transfrom,
-            #                               annotations=DRAW_ANNOTATIONS,
-            #                               pseudo_label=pseudo,
-            #                               pseudo_threshold=PSEUDO_THRESHOLD)
-            train_datasets += [test_dataset]  # , xrays_dataset]
+            train_datasets += [test_dataset]
         train_dataset = RanzcrDataset(folds_data,
                                       folds=train_folds,
                                       transform=train_transfrom,

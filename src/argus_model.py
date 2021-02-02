@@ -4,10 +4,13 @@ import timm
 import argus
 from argus.utils import deep_to, deep_detach
 
+from src.models.timm import TimmModel
+
 
 class RanzcrModel(argus.Model):
     nn_module = {
-        "timm": timm.create_model
+        "timm": timm.create_model,
+        "TimmModel": TimmModel
     }
     prediction_transform = torch.nn.Sigmoid
 
