@@ -66,7 +66,7 @@ PARAMS = {
         'in_chans': N_CHANNELS,
         'drop_rate': 0.3,
         'drop_path_rate': 0.2,
-        'attention': {'kernel_size': 7}
+        'attention': {'kernel_size': 3}
     }),
     'loss': 'BCEWithLogitsLoss',
     'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
