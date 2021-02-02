@@ -122,9 +122,7 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
         train_dataset = RanzcrDataset(folds_data,
                                       folds=train_folds,
                                       transform=train_transfrom,
-                                      annotations=DRAW_ANNOTATIONS,
-                                      pseudo_label=pseudo,
-                                      pseudo_threshold=PSEUDO_THRESHOLD)
+                                      annotations=DRAW_ANNOTATIONS)
         train_datasets += [train_dataset]
 
         train_dataset = ConcatDataset(train_datasets)
