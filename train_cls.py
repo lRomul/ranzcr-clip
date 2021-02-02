@@ -35,7 +35,7 @@ PSEUDO_THRESHOLD = 0.5
 BATCH_SIZE = 16
 IMAGE_SIZE = 768
 NUM_WORKERS = 8
-NUM_EPOCHS = [1, 9, 3]
+NUM_EPOCHS = [2, 16, 3]
 STAGE = ['warmup', 'train', 'cooldown']
 BASE_LR = 1e-3
 MIN_BASE_LR = 1e-5
@@ -105,24 +105,26 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
             test_data = get_test_data(
                 pseudo_label_path=TEST_PSEUDO / f'fold_{val_folds[0]}' / 'preds.npz'
             )
-            xrays_data = get_chest_xrays_data(
-                pseudo_label_path=XRAYS_PSEUDO / f'fold_{val_folds[0]}' / 'preds.npz'
-            )
+            # xrays_data = get_chest_xrays_data(
+            #     pseudo_label_path=XRAYS_PSEUDO / f'fold_{val_folds[0]}' / 'preds.npz'
+            # )
             test_dataset = RanzcrDataset(test_data,
                                          transform=train_transfrom,
                                          annotations=DRAW_ANNOTATIONS,
                                          pseudo_label=pseudo,
                                          pseudo_threshold=PSEUDO_THRESHOLD)
-            xrays_dataset = RanzcrDataset(xrays_data, length=25000,
-                                          transform=train_transfrom,
-                                          annotations=DRAW_ANNOTATIONS,
-                                          pseudo_label=pseudo,
-                                          pseudo_threshold=PSEUDO_THRESHOLD)
-            train_datasets += [test_dataset, xrays_dataset]
+            # xrays_dataset = RanzcrDataset(xrays_data, length=25000,
+            #                               transform=train_transfrom,
+            #                               annotations=DRAW_ANNOTATIONS,
+            #                               pseudo_label=pseudo,
+            #                               pseudo_threshold=PSEUDO_THRESHOLD)
+            train_datasets += [test_dataset]  #, xrays_dataset]
         train_dataset = RanzcrDataset(folds_data,
                                       folds=train_folds,
                                       transform=train_transfrom,
-                                      annotations=DRAW_ANNOTATIONS)
+                                      annotations=DRAW_ANNOTATIONS,
+                                      pseudo_label=pseudo,
+                                      pseudo_threshold=PSEUDO_THRESHOLD)
         train_datasets += [train_dataset]
 
         train_dataset = ConcatDataset(train_datasets)
