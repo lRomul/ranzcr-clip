@@ -28,16 +28,16 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
-SEGM_EXPERIMENT = 'segm_003'
+SEGM_EXPERIMENT = ''
 PSEUDO_EXPERIMENT = ''
 PSEUDO_THRESHOLD = 0.5
-BATCH_SIZE = 16
-IMAGE_SIZE = 768
-NUM_WORKERS = 8
+BATCH_SIZE = 33
+IMAGE_SIZE = 1024
+NUM_WORKERS = 11
 NUM_EPOCHS = [2, 16]  # , 3]
 STAGE = ['warmup', 'train']  # , 'cooldown']
-BASE_LR = 1e-3
-MIN_BASE_LR = 1e-5
+BASE_LR = 5e-4
+MIN_BASE_LR = 5e-6
 USE_AMP = True
 USE_EMA = True
 DRAW_ANNOTATIONS = False
@@ -66,7 +66,7 @@ PARAMS = {
         'in_chans': N_CHANNELS,
         'drop_rate': 0.3,
         'drop_path_rate': 0.2,
-        'attention': {'kernel_size': 7}
+        'attention': None
     }),
     'loss': 'BCEWithLogitsLoss',
     'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
