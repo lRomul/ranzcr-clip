@@ -123,20 +123,34 @@ def get_test_data(lung_masks_dir=None, pseudo_label_path=None):
     return test_data
 
 
-def get_chest_xrays_data(pseudo_label_path=None):
+def get_chest_xrays_data(classes=None, pseudo_label_path=None):
     test_data = []
+    if classes is None:
+        classes = []
 
     pseudo_label_dict = dict()
     if pseudo_label_path is not None:
         pseudo_label_dict = load_pseudo_label(pseudo_label_path)
 
+    with open(config.nih_chest_xrays_dir / 'test_list.txt', 'r') as file:
+        test_set = {s.strip().split('.')[0] for s in file.readlines()}
+
+    train_df = pd.read_csv(config.nih_chest_xrays_dir / 'Data_Entry_2017.csv')
+    id2labels = dict()
+    for i, row in train_df.iterrows():
+        id2labels[row['Image Index'].split('.')[0]] = row['Finding Labels']
+
     dir_path = config.nih_chest_xrays_dir / 'images_*' / 'images' /"*.png"
     for image_path in sorted(glob.glob(str(dir_path))):
         study_id = Path(image_path).stem
+
         sample = {
             'image_path': image_path,
             'StudyInstanceUID': study_id,
+            'fold': 0 if study_id in test_set else 1
         }
+        for cls in classes:
+            sample[cls] = int(cls in id2labels[study_id])
         if study_id in pseudo_label_dict:
             sample['pseudo_label'] = pseudo_label_dict[study_id]
         else:
@@ -155,7 +169,8 @@ class RanzcrDataset(Dataset):
                  annotations=False,
                  pseudo_label=False,
                  pseudo_threshold=None,
-                 length=None):
+                 length=None,
+                 classes=None):
         self.data = data
         self.folds = folds
         self.transform = transform
@@ -165,6 +180,7 @@ class RanzcrDataset(Dataset):
         self.pseudo_label = pseudo_label
         self.pseudo_threshold = pseudo_threshold
         self.length = length
+        self.classes = classes
         if folds is not None:
             self.data = [s for s in self.data if s['fold'] in folds]
 
@@ -202,6 +218,10 @@ class RanzcrDataset(Dataset):
             if self.pseudo_threshold is not None:
                 target = target > self.pseudo_threshold
             target = torch.from_numpy(target.astype('float32'))
+        elif self.classes is not None:
+            target = torch.zeros(len(self.classes), dtype=torch.float32)
+            for trg, cls in enumerate(self.classes):
+                target[trg] = sample[cls]
         else:
             target = torch.zeros(config.n_classes, dtype=torch.float32)
             for cls in config.classes:
