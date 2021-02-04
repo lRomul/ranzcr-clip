@@ -26,8 +26,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--experiment', required=True, type=str)
 args = parser.parse_args()
 
-BATCH_SIZE = 10
-IMAGE_SIZE = 1024
+BATCH_SIZE = 16
+IMAGE_SIZE = 768
 NUM_WORKERS = 8
 NUM_EPOCHS = [1, 14]
 STAGE = ['warmup', 'train']
