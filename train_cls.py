@@ -4,6 +4,7 @@ import argparse
 import torch
 from torch.utils.data import DataLoader, ConcatDataset
 
+from argus import load_model
 from argus.callbacks import (
     MonitorCheckpoint,
     LoggingToFile,
@@ -20,6 +21,7 @@ from src.datasets import (
 from src.transforms import get_transforms
 from src.argus_model import RanzcrModel
 from src.ema import EmaMonitorCheckpoint, ModelEma
+from src.utils import get_best_model_path
 from src import config
 
 
@@ -30,10 +32,11 @@ args = parser.parse_args()
 
 SEGM_EXPERIMENT = ''
 PSEUDO_EXPERIMENT = ''
+PRETRAIN_EXPERIMENT = 'prtrn_001'
 PSEUDO_THRESHOLD = 0.5
-BATCH_SIZE = 36
+BATCH_SIZE = 33
 IMAGE_SIZE = 1024
-NUM_WORKERS = 12
+NUM_WORKERS = 11
 NUM_EPOCHS = [2, 16]  # , 3]
 STAGE = ['warmup', 'train']  # , 'cooldown']
 BASE_LR = 5e-4
@@ -50,7 +53,10 @@ if PSEUDO_EXPERIMENT:
 else:
     PSEUDO = None
     TEST_PSEUDO = None
-    XRAYS_PSEUDO = None
+if PRETRAIN_EXPERIMENT:
+    PRETRAIN_DIR = config.experiments_dir / PRETRAIN_EXPERIMENT / 'fold_0'
+else:
+    PRETRAIN_DIR = None
 N_CHANNELS = 3 if DRAW_ANNOTATIONS else 1
 
 
@@ -82,6 +88,24 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
     model = RanzcrModel(PARAMS)
     if 'pretrained' in model.params['nn_module'][1]:
         model.params['nn_module'][1]['pretrained'] = False
+
+    if PRETRAIN_DIR is not None:
+        device = model.get_device()
+        model.set_device('cpu')
+
+        def change_state_dict(nn_state_dict, optimizer_state_dict):
+            nn_state_dict['model.classifier.weight'] = \
+                nn_state_dict['model.classifier.weight'][:config.n_classes]
+            nn_state_dict['model.classifier.bias'] = \
+                nn_state_dict['model.classifier.bias'][:config.n_classes]
+            return nn_state_dict, None
+
+        pretrain_model = load_model(get_best_model_path(PRETRAIN_DIR),
+                                    nn_module=PARAMS['nn_module'],
+                                    change_state_dict_func=change_state_dict,
+                                    device='cpu')
+        model.nn_module.load_state_dict(pretrain_model.nn_module.state_dict())
+        model.set_device(device)
 
     if USE_EMA:
         print(f"EMA decay: {EMA_DECAY}")
