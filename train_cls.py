@@ -32,11 +32,11 @@ args = parser.parse_args()
 
 SEGM_EXPERIMENT = ''
 PSEUDO_EXPERIMENT = ''
-PRETRAIN_EXPERIMENT = 'prtrn_001'
+PRETRAIN_EXPERIMENT = 'prtrn_002'
 PSEUDO_THRESHOLD = None
-BATCH_SIZE = 33
-IMAGE_SIZE = 1024
-NUM_WORKERS = 11
+BATCH_SIZE = 16
+IMAGE_SIZE = 768
+NUM_WORKERS = 8
 NUM_EPOCHS = [2, 16]  # , 3]
 STAGE = ['warmup', 'train']  # , 'cooldown']
 BASE_LR = 5e-4
