@@ -10,7 +10,8 @@ from argus.callbacks import (
     LoggingToFile,
     LoggingToCSV,
     CosineAnnealingLR,
-    LambdaLR
+    LambdaLR,
+    EarlyStopping
 )
 
 from src.datasets import (
@@ -32,10 +33,10 @@ args = parser.parse_args()
 
 SEGM_EXPERIMENT = ''
 PSEUDO_EXPERIMENT = ''
-PRETRAIN_EXPERIMENT = 'prtrn_002'
+PRETRAIN_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
-BATCH_SIZE = 16
-IMAGE_SIZE = 768
+BATCH_SIZE = 21
+IMAGE_SIZE = 1024
 NUM_WORKERS = 8
 NUM_EPOCHS = [2, 16]  # , 3]
 STAGE = ['warmup', 'train']  # , 'cooldown']
@@ -66,12 +67,10 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('TimmModel', {
-        'model_name': 'tf_efficientnet_b3_ns',
+        'model_name': 'resnet200d_320',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.3,
-        'drop_path_rate': 0.2,
         'attention': None
     }),
     'loss': 'BCEWithLogitsLoss',
@@ -160,8 +159,9 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
                 CosineAnnealingLR(T_max=num_iterations,
                                   eta_min=get_lr(MIN_BASE_LR, BATCH_SIZE),
                                   step_on_iteration=True),
-                checkpoint(save_dir, monitor=f'val_roc_auc',
-                           max_saves=1, better='max')
+                checkpoint(save_dir, monitor='val_roc_auc',
+                           max_saves=1, better='max'),
+                EarlyStopping(monitor='val_roc_auc', patience=2)
             ]
         elif stage == 'cooldown':
             callbacks += [
