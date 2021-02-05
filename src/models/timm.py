@@ -17,6 +17,7 @@ class TimmModel(nn.Module):
             self.attention = SpatialAttention(**attention)
         else:
             self.attention = None
+        self.model.classifier = self.model.get_classifier()
 
     def forward(self, x, features=False, attention=False):
         output = []

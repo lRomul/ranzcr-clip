@@ -33,7 +33,7 @@ args = parser.parse_args()
 SEGM_EXPERIMENT = ''
 PSEUDO_EXPERIMENT = ''
 PRETRAIN_EXPERIMENT = 'prtrn_001'
-PSEUDO_THRESHOLD = 0.5
+PSEUDO_THRESHOLD = None
 BATCH_SIZE = 33
 IMAGE_SIZE = 1024
 NUM_WORKERS = 11
@@ -92,18 +92,10 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
     if PRETRAIN_DIR is not None:
         device = model.get_device()
         model.set_device('cpu')
-
-        def change_state_dict(nn_state_dict, optimizer_state_dict):
-            nn_state_dict['model.classifier.weight'] = \
-                nn_state_dict['model.classifier.weight'][:config.n_classes]
-            nn_state_dict['model.classifier.bias'] = \
-                nn_state_dict['model.classifier.bias'][:config.n_classes]
-            return nn_state_dict, None
-
-        pretrain_model = load_model(get_best_model_path(PRETRAIN_DIR),
-                                    nn_module=PARAMS['nn_module'],
-                                    change_state_dict_func=change_state_dict,
-                                    device='cpu')
+        model_path = get_best_model_path(PRETRAIN_DIR)
+        print(f"Pretrain weights: {model_path}")
+        pretrain_model = load_model(model_path, device='cpu')
+        pretrain_model.nn_module.model.reset_classifier(config.n_classes)
         model.nn_module.load_state_dict(pretrain_model.nn_module.state_dict())
         model.set_device(device)
 
