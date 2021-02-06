@@ -35,13 +35,13 @@ SEGM_EXPERIMENT = ''
 PSEUDO_EXPERIMENT = ''
 PRETRAIN_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
-BATCH_SIZE = 10
+BATCH_SIZE = 12
 IMAGE_SIZE = 768
 NUM_WORKERS = 8
 NUM_EPOCHS = [2, 16]  # , 3]
 STAGE = ['warmup', 'train']  # , 'cooldown']
-BASE_LR = 2.5e-4
-MIN_BASE_LR = 2.5e-6
+BASE_LR = 5e-4
+MIN_BASE_LR = 5e-6
 USE_AMP = True
 USE_EMA = True
 DRAW_ANNOTATIONS = False
@@ -67,10 +67,12 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('TimmModel', {
-        'model_name': 'resnet200d_320',
+        'model_name': 'tf_efficientnet_b4_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
+        'drop_rate': 0.4,
+        'drop_path_rate': 0.2,
         'attention': None
     }),
     'loss': 'BCEWithLogitsLoss',
