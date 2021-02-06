@@ -28,7 +28,7 @@ from src import config
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--experiment', required=True, type=str)
-parser.add_argument('--folds', default='', type=str)
+parser.add_argument('--folds', default='all', type=str)
 args = parser.parse_args()
 
 SEGM_EXPERIMENT = ''
@@ -193,10 +193,10 @@ if __name__ == "__main__":
     folds_data = get_folds_data(lung_masks_dir=segm_predictions_dir,
                                 pseudo_label_path=PSEUDO)
 
-    if args.folds:
-        folds = [int(fold) for fold in args.folds.split(',')]
-    else:
+    if args.folds == 'all':
         folds = config.folds
+    else:
+        folds = [int(fold) for fold in args.folds.split(',')]
 
     for fold in folds:
         val_folds = [fold]
