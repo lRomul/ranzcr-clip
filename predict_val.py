@@ -61,7 +61,7 @@ def classification_pred():
         print("Model path", model_path)
 
         predictor = Predictor(model_path, BATCH_SIZE,
-                              device=DEVICE, num_workers=8, tta=True)
+                              device=DEVICE, num_workers=8, tta=False)
         folds_data = get_folds_data(lung_masks_dir=SEGM_PREDICTION_DIR)
         folds_data = [s for s in folds_data if s['fold'] == fold]
         study_ids = [s['StudyInstanceUID'] for s in folds_data]

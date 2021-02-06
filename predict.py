@@ -37,7 +37,7 @@ def classification_pred():
         print("Model path", model_path)
 
         predictor = Predictor(model_path, BATCH_SIZE,
-                              device=DEVICE, tta=True,
+                              device=DEVICE, tta=False,
                               num_workers=NUM_WORKERS)
         test_data = get_test_data()
 
