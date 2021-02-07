@@ -29,9 +29,9 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='all', type=str)
 args = parser.parse_args()
 
-PSEUDO_EXPERIMENT = 'b4_001,b4_002,pot200d_002,pot200d_006,pot_001'
+PSEUDO_EXPERIMENT = 'b4_002'
 PSEUDO_THRESHOLD = None
-BATCH_SIZE = 10
+BATCH_SIZE = 8
 IMAGE_SIZE = 1024
 NUM_WORKERS = 12
 NUM_EPOCHS = [2, 16]  # , 3]
