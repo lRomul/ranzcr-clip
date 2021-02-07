@@ -32,7 +32,6 @@ parser.add_argument('--folds', default='all', type=str)
 args = parser.parse_args()
 
 PSEUDO_EXPERIMENT = ''
-PRETRAIN_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
 BATCH_SIZE = 8
 IMAGE_SIZE = 768
@@ -52,10 +51,6 @@ if PSEUDO_EXPERIMENT:
 else:
     PSEUDO = None
     TEST_PSEUDO = None
-if PRETRAIN_EXPERIMENT:
-    PRETRAIN_DIR = config.experiments_dir / PRETRAIN_EXPERIMENT / 'fold_0'
-else:
-    PRETRAIN_DIR = None
 N_CHANNELS = 1
 
 
@@ -87,16 +82,6 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
     model = RanzcrModel(PARAMS)
     if 'pretrained' in model.params['nn_module'][1]:
         model.params['nn_module'][1]['pretrained'] = False
-
-    if PRETRAIN_DIR is not None:
-        device = model.get_device()
-        model.set_device('cpu')
-        model_path = get_best_model_path(PRETRAIN_DIR)
-        print(f"Pretrain weights: {model_path}")
-        pretrain_model = load_model(model_path, device='cpu')
-        pretrain_model.nn_module.model.reset_classifier(config.n_classes)
-        model.nn_module.load_state_dict(pretrain_model.nn_module.state_dict())
-        model.set_device(device)
 
     if USE_EMA:
         print(f"EMA decay: {EMA_DECAY}")
@@ -188,9 +173,7 @@ if __name__ == "__main__":
     with open(SAVE_DIR / 'params.json', 'w') as outfile:
         json.dump(PARAMS, outfile)
 
-    segm_predictions_dir = config.segm_predictions_dir / 'val' / SEGM_EXPERIMENT
-    folds_data = get_folds_data(lung_masks_dir=segm_predictions_dir,
-                                pseudo_label_path=PSEUDO)
+    folds_data = get_folds_data(pseudo_label_path=PSEUDO)
 
     if args.folds == 'all':
         folds = config.folds
