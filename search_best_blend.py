@@ -7,6 +7,7 @@ from multiprocessing import Pool
 from sklearn.metrics import roc_auc_score
 
 from src import config
+from src.utils import load_and_blend_preds
 
 
 parser = argparse.ArgumentParser()
@@ -16,23 +17,14 @@ args = parser.parse_args()
 
 
 def experiments_blend_score(experiments):
-    pred_lst = []
-    study_ids = None
-    for experiment in experiments:
-        pred_path = config.predictions_dir / experiment / 'val' / 'preds.npz'
-        pred_npz = np.load(pred_path)
-        preds = pred_npz['preds']
-        if study_ids is not None:
-            assert np.all(study_ids == pred_npz['study_ids'])
-        study_ids = pred_npz['study_ids']
-        pred_lst.append(preds)
-
-    preds = np.mean(pred_lst, axis=0)
+    pred_paths = [config.predictions_dir / e / 'val' / 'preds.npz'
+                  for e in experiments]
+    blend_preds, study_ids = load_and_blend_preds(pred_paths)
 
     train_df = pd.read_csv(config.train_folds_path, index_col=0)
     train_df = train_df.loc[study_ids].copy()
     scores = roc_auc_score(train_df[config.classes].values,
-                           preds, average=None)
+                           blend_preds, average=None)
     return np.mean(scores)
 
 

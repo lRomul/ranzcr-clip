@@ -1,7 +1,14 @@
 import re
+import json
 import shutil
+import numpy as np
+import pandas as pd
 from pathlib import Path
+from sklearn.metrics import roc_auc_score
+
 import matplotlib.pyplot as plt
+
+from src import config
 
 
 def image_show(image, title='', figsize=(5, 5)):
@@ -38,3 +45,35 @@ def remove_than_make_dir(dir_path):
     if dir_path.exists():
         shutil.rmtree(dir_path)
     dir_path.mkdir(parents=True, exist_ok=True)
+
+
+def load_and_blend_preds(pred_paths):
+    pred_lst = []
+    study_ids = None
+    for pred_path in pred_paths:
+        pred_npz = np.load(pred_path)
+        preds = pred_npz['preds']
+        if study_ids is not None:
+            assert np.all(study_ids == pred_npz['study_ids'])
+        study_ids = pred_npz['study_ids']
+        pred_lst.append(preds)
+
+    blend_preds = np.mean(pred_lst, axis=0)
+    return blend_preds, study_ids
+
+
+def save_and_score_val_subm(pred, study_ids, dir_path):
+    subm_df = pd.DataFrame(index=study_ids, columns=config.classes)
+    subm_df.index.name = 'StudyInstanceUID'
+    subm_df.values[:] = pred
+    subm_df.to_csv(dir_path / 'submission.csv')
+
+    train_df = pd.read_csv(config.train_folds_path, index_col=0)
+    train_df = train_df.loc[subm_df.index].copy()
+    scores = roc_auc_score(train_df[config.classes].values,
+                           subm_df[config.classes].values, average=None)
+    scores_dict = {cls: scr for cls, scr in zip(config.classes, scores)}
+    scores_dict['Overal'] = np.mean(scores)
+
+    with open(dir_path / 'scores.json', 'w') as outfile:
+        json.dump(scores_dict, outfile)

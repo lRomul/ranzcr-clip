@@ -1,12 +1,13 @@
-import json
 import argparse
 import numpy as np
-import pandas as pd
-from sklearn.metrics import roc_auc_score
 
 from src.predictor import Predictor
 from src.datasets import get_folds_data
-from src.utils import get_best_model_path, remove_than_make_dir
+from src.utils import (
+    get_best_model_path,
+    remove_than_make_dir,
+    save_and_score_val_subm
+)
 
 from src import config
 
@@ -56,20 +57,8 @@ def make_submission(pred_dict):
     folds_data = get_folds_data()
     study_ids = [s['StudyInstanceUID'] for s in folds_data]
     pred = np.stack([pred_dict[s] for s in study_ids])
-    subm_df = pd.DataFrame(index=study_ids, columns=config.classes)
-    subm_df.index.name = 'StudyInstanceUID'
-    subm_df.values[:] = pred
-    subm_df.to_csv(VAL_PREDICTION_DIR / 'submission.csv')
 
-    train_df = pd.read_csv(config.train_folds_path, index_col=0)
-    train_df = train_df.loc[subm_df.index].copy()
-    scores = roc_auc_score(train_df[config.classes].values,
-                           subm_df[config.classes].values, average=None)
-    scores_dict = {cls: scr for cls, scr in zip(config.classes, scores)}
-    scores_dict['Overal'] = np.mean(scores)
-
-    with open(VAL_PREDICTION_DIR / 'scores.json', 'w') as outfile:
-        json.dump(scores_dict, outfile)
+    save_and_score_val_subm(pred, study_ids, VAL_PREDICTION_DIR)
 
 
 if __name__ == "__main__":
