@@ -66,16 +66,23 @@ def make_submission(experiments):
             assert np.all(study_ids == pred_npz['study_ids'])
         study_ids = pred_npz['study_ids']
         pred_lst.append(preds)
-
-    preds = np.mean(pred_lst, axis=0)
+    assert len(pred_lst) == len(experiments)
+    blend_preds = np.mean(pred_lst, axis=0)
 
     subm_df = pd.DataFrame(index=study_ids, columns=config.classes)
     subm_df.index.name = 'StudyInstanceUID'
-    subm_df.values[:] = preds
+    subm_df.values[:] = blend_preds
     if config.kernel_mode:
         subm_df.to_csv('submission.csv')
     else:
-        subm_df.to_csv(config.predictions_dir / f"{','.join(experiments)}.csv")
+        test_prediction_dir = config.predictions_dir / ','.join(experiments) / 'test'
+        remove_than_make_dir(test_prediction_dir)
+        subm_df.to_csv(test_prediction_dir / "submission.csv")
+        np.savez(
+            test_prediction_dir / 'preds.npz',
+            preds=blend_preds,
+            study_ids=study_ids,
+        )
 
 
 if __name__ == "__main__":

@@ -40,7 +40,8 @@ if __name__ == "__main__":
     experiments = []
     for experiment_dir in config.predictions_dir.iterdir():
         if experiment_dir.is_dir():
-            experiments.append(experiment_dir.name)
+            if ',' not in str(experiment_dir):  # filter blend predictions
+                experiments.append(experiment_dir.name)
 
     combinations = []
     for num_exp in range(1, min(len(experiments), args.max) + 1):
@@ -49,7 +50,7 @@ if __name__ == "__main__":
     with Pool(processes=args.workers) as pool:
         scores = pool.map(experiments_blend_score, combinations)
 
-    experiments_scores = [(sorted(exp), scr) for exp, scr
+    experiments_scores = [(','.join(sorted(exp)), scr) for exp, scr
                           in zip(combinations, scores)]
     experiments_scores = sorted(experiments_scores, key=lambda x: x[1])
 
