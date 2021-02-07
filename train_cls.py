@@ -31,8 +31,8 @@ args = parser.parse_args()
 
 PSEUDO_EXPERIMENT = 'b4_001,b4_002,pot200d_002,pot200d_006,pot_001'
 PSEUDO_THRESHOLD = None
-BATCH_SIZE = 16
-IMAGE_SIZE = 768
+BATCH_SIZE = 10
+IMAGE_SIZE = 1024
 NUM_WORKERS = 12
 NUM_EPOCHS = [2, 16]  # , 3]
 STAGE = ['warmup', 'train']  # , 'cooldown']
