@@ -78,11 +78,6 @@ def make_submission(experiments):
         test_prediction_dir = config.predictions_dir / ','.join(experiments) / 'test'
         remove_than_make_dir(test_prediction_dir)
         subm_df.to_csv(test_prediction_dir / "submission.csv")
-        np.savez(
-            test_prediction_dir / 'preds.npz',
-            preds=blend_preds,
-            study_ids=study_ids,
-        )
 
 
 if __name__ == "__main__":

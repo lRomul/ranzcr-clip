@@ -31,7 +31,6 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='all', type=str)
 args = parser.parse_args()
 
-SEGM_EXPERIMENT = ''
 PSEUDO_EXPERIMENT = ''
 PRETRAIN_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
@@ -44,7 +43,6 @@ BASE_LR = 5e-4
 MIN_BASE_LR = 5e-6
 USE_AMP = True
 USE_EMA = True
-DRAW_ANNOTATIONS = False
 EMA_DECAY = 0.9997
 SAVE_DIR = config.experiments_dir / args.experiment
 
@@ -58,7 +56,7 @@ if PRETRAIN_EXPERIMENT:
     PRETRAIN_DIR = config.experiments_dir / PRETRAIN_EXPERIMENT / 'fold_0'
 else:
     PRETRAIN_DIR = None
-N_CHANNELS = 3 if DRAW_ANNOTATIONS else 1
+N_CHANNELS = 1
 
 
 def get_lr(base_lr, batch_size):
@@ -81,7 +79,7 @@ PARAMS = {
     'amp': USE_AMP,
     'clip_grad': False,
     'image_size': IMAGE_SIZE,
-    'draw_annotations': DRAW_ANNOTATIONS
+    'draw_annotations': False
 }
 
 
@@ -114,7 +112,7 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
                                        n_channels=N_CHANNELS)
 
         pseudo = stage != 'cooldown' and PSEUDO is not None
-        print(f"Pseudo label: {pseudo}, draw annotations: {DRAW_ANNOTATIONS}")
+        print(f"Pseudo label: {pseudo}")
 
         train_datasets = []
         if pseudo:
@@ -123,22 +121,21 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
             )
             test_dataset = RanzcrDataset(test_data,
                                          transform=train_transfrom,
-                                         annotations=DRAW_ANNOTATIONS,
                                          pseudo_label=pseudo,
                                          pseudo_threshold=PSEUDO_THRESHOLD)
             train_datasets += [test_dataset]
         train_dataset = RanzcrDataset(folds_data,
                                       folds=train_folds,
                                       transform=train_transfrom,
-                                      annotations=DRAW_ANNOTATIONS)
+                                      pseudo_label=pseudo,
+                                      pseudo_threshold=PSEUDO_THRESHOLD)
         train_datasets += [train_dataset]
 
         train_dataset = ConcatDataset(train_datasets)
 
         val_dataset = RanzcrDataset(folds_data,
                                     folds=val_folds,
-                                    transform=val_transform,
-                                    annotations=DRAW_ANNOTATIONS)
+                                    transform=val_transform)
         train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
                                   shuffle=True, drop_last=True,
                                   num_workers=NUM_WORKERS)
