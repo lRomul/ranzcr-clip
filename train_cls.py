@@ -4,7 +4,6 @@ import argparse
 import torch
 from torch.utils.data import DataLoader, ConcatDataset
 
-from argus import load_model
 from argus.callbacks import (
     MonitorCheckpoint,
     LoggingToFile,
@@ -22,7 +21,6 @@ from src.datasets import (
 from src.transforms import get_transforms
 from src.argus_model import RanzcrModel
 from src.ema import EmaMonitorCheckpoint, ModelEma
-from src.utils import get_best_model_path
 from src import config
 
 
@@ -33,7 +31,7 @@ args = parser.parse_args()
 
 PSEUDO_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
-BATCH_SIZE = 8
+BATCH_SIZE = 12
 IMAGE_SIZE = 768
 NUM_WORKERS = 12
 NUM_EPOCHS = [2, 16]  # , 3]
@@ -51,7 +49,7 @@ if PSEUDO_EXPERIMENT:
 else:
     PSEUDO = None
     TEST_PSEUDO = None
-N_CHANNELS = 1
+N_CHANNELS = 3
 
 
 def get_lr(base_lr, batch_size):
@@ -60,12 +58,10 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('TimmModel', {
-        'model_name': 'tf_efficientnet_b5_ns',
+        'model_name': 'resnet200d_320',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.4,
-        'drop_path_rate': 0.2,
         'attention': None
     }),
     'loss': 'BCEWithLogitsLoss',
@@ -82,6 +78,21 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
     model = RanzcrModel(PARAMS)
     if 'pretrained' in model.params['nn_module'][1]:
         model.params['nn_module'][1]['pretrained'] = False
+
+    device = model.get_device()
+    model.set_device('cpu')
+    state = model.nn_module.state_dict()
+    pretrain_state = torch.load('/workdir/data/startingpointschestx/resnet200d_320_chestx.pth',
+                                map_location='cpu')
+    for name, weight in pretrain_state['model'].items():
+        if name in state:
+            if weight.shape == state[name].shape:
+                state[name] = weight
+                continue
+        print(f"Skip {name} {weight.shape}")
+
+    model.nn_module.load_state_dict(state)
+    model.set_device(device)
 
     if USE_EMA:
         print(f"EMA decay: {EMA_DECAY}")

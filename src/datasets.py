@@ -204,7 +204,12 @@ class RanzcrDataset(Dataset):
             draw_mask(image, mask)
             draw_annotations(image, sample['annotations'])
         else:
-            image = cv2.imread(sample['image_path'], cv2.IMREAD_GRAYSCALE)
+            if self.transform.n_channels == 3:
+                image = cv2.imread(sample['image_path'], cv2.IMREAD_COLOR)
+            elif self.transform.n_channels == 1:
+                image = cv2.imread(sample['image_path'], cv2.IMREAD_GRAYSCALE)
+            else:
+                raise ValueError
 
         if not self.return_target:
             return image, None

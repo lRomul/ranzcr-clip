@@ -50,4 +50,5 @@ def get_transforms(train: bool, size: int, n_channels: int,
             alb.Normalize(mean=mean[:n_channels], std=[std[:n_channels]]),
             alb.pytorch.ToTensorV2()
         ])
+    transforms.n_channels = n_channels
     return transforms
