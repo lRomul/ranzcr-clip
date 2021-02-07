@@ -75,7 +75,7 @@ def make_submission(experiments):
     if config.kernel_mode:
         subm_df.to_csv('submission.csv')
     else:
-        subm_df.to_csv(config.predictions_dir / f"{'-'.join(experiments)}.csv")
+        subm_df.to_csv(config.predictions_dir / f"{','.join(experiments)}.csv")
 
 
 if __name__ == "__main__":
