@@ -11,40 +11,34 @@ from src import config
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--experiment', required=True, type=str)
-parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
-EXPERIMENT = args.experiment
 BATCH_SIZE = 4
 DEVICE = 'cuda'
 NUM_WORKERS = 2 if config.kernel_mode else 8
-TEST_PREDICTION_DIR = config.predictions_dir / EXPERIMENT / 'test'
-if args.folds:
-    FOLDS = [int(fold) for fold in args.folds.split(',')]
-else:
-    FOLDS = config.folds
 
 
-def classification_pred():
-    print(f"Start predict: {EXPERIMENT}")
+def classification_pred(test_data, experiment):
+    test_prediction_dir = config.predictions_dir / experiment / 'test'
+    remove_than_make_dir(test_prediction_dir)
+    print(f"Start predict: {experiment}")
+    study_ids = [s['StudyInstanceUID'] for s in test_data]
 
     pred_lst = []
-    for fold in FOLDS:
+    for fold in config.folds:
         print("Predict fold", fold)
         model_path = get_best_model_path(
-            config.experiments_dir / EXPERIMENT / f'fold_{fold}'
+            config.experiments_dir / experiment / f'fold_{fold}'
         )
         print("Model path", model_path)
 
         predictor = Predictor(model_path, BATCH_SIZE,
                               device=DEVICE, tta=False,
                               num_workers=NUM_WORKERS)
-        test_data = get_test_data()
 
         fold_pred = predictor.predict(test_data)
         if not config.kernel_mode:
-            study_ids = [s['StudyInstanceUID'] for s in test_data]
-            fold_pred_dir = TEST_PREDICTION_DIR / f'fold_{fold}'
+            fold_pred_dir = test_prediction_dir / f'fold_{fold}'
             fold_pred_dir.mkdir(exist_ok=True, parents=True)
             np.savez(
                 fold_pred_dir / 'preds.npz',
@@ -54,26 +48,44 @@ def classification_pred():
 
         pred_lst.append(fold_pred)
 
-    pred = np.mean(pred_lst, axis=0)
-    return pred
+    np.savez(
+        test_prediction_dir / 'preds.npz',
+        preds=np.mean(pred_lst, axis=0),
+        study_ids=study_ids,
+    )
 
 
-def make_submission(pred):
-    test_data = get_test_data()
-    study_ids = [s['StudyInstanceUID'] for s in test_data]
+def make_submission(experiments):
+    pred_lst = []
+    study_ids = None
+    for experiment in experiments:
+        pred_path = config.predictions_dir / experiment / 'test' / 'preds.npz'
+        pred_npz = np.load(pred_path)
+        preds = pred_npz['preds']
+        if study_ids is not None:
+            assert np.all(study_ids == pred_npz['study_ids'])
+        study_ids = pred_npz['study_ids']
+        pred_lst.append(preds)
+
+    preds = np.mean(pred_lst, axis=0)
+
     subm_df = pd.DataFrame(index=study_ids, columns=config.classes)
     subm_df.index.name = 'StudyInstanceUID'
-    subm_df.values[:] = pred
+    subm_df.values[:] = preds
     if config.kernel_mode:
         subm_df.to_csv('submission.csv')
     else:
-        subm_df.to_csv(TEST_PREDICTION_DIR / 'submission.csv')
+        subm_df.to_csv(config.predictions_dir / f"{'-'.join(experiments)}.csv")
 
 
 if __name__ == "__main__":
+    experiments = sorted(args.experiment.split(','))
+    assert experiments
     print("Device", DEVICE)
     print("Batch size", BATCH_SIZE)
+    print("Experiments", experiments)
 
-    remove_than_make_dir(TEST_PREDICTION_DIR)
-    pred = classification_pred()
-    make_submission(pred)
+    test_data = get_test_data()
+    for experiment in experiments:
+        classification_pred(test_data, experiment)
+    make_submission(experiments)
