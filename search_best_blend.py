@@ -49,7 +49,8 @@ if __name__ == "__main__":
     with Pool(processes=args.workers) as pool:
         scores = pool.map(experiments_blend_score, combinations)
 
-    experiments_scores = [(exp, scr) for exp, scr in zip(combinations, scores)]
+    experiments_scores = [(sorted(exp), scr) for exp, scr
+                          in zip(combinations, scores)]
     experiments_scores = sorted(experiments_scores, key=lambda x: x[1])
 
     pprint(experiments_scores)
