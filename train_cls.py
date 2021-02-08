@@ -31,11 +31,11 @@ args = parser.parse_args()
 
 PSEUDO_EXPERIMENT = 'b4_002'
 PSEUDO_THRESHOLD = None
-BATCH_SIZE = 8
-IMAGE_SIZE = 1024
+BATCH_SIZE = 16
+IMAGE_SIZE = 768
 NUM_WORKERS = 12
-NUM_EPOCHS = [2, 16]  # , 3]
-STAGE = ['warmup', 'train']  # , 'cooldown']
+NUM_EPOCHS = [2, 16, 3]
+STAGE = ['warmup', 'train', 'cooldown']
 BASE_LR = 5e-4
 MIN_BASE_LR = 5e-6
 USE_AMP = True
