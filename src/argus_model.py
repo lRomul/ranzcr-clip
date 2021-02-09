@@ -3,14 +3,20 @@ import timm
 
 import argus
 from argus.utils import deep_to, deep_detach
+from argus.loss import pytorch_losses
 
 from src.models.timm import TimmModel
+from src.loss import DistillationLoss
 
 
 class RanzcrModel(argus.Model):
     nn_module = {
         "timm": timm.create_model,
         "TimmModel": TimmModel
+    }
+    loss = {
+        **pytorch_losses,
+        'DistillationLoss': DistillationLoss
     }
     prediction_transform = torch.nn.Sigmoid
 
