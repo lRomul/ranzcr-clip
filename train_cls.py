@@ -29,10 +29,10 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='all', type=str)
 args = parser.parse_args()
 
-PSEUDO_EXPERIMENT = 'b4_001,b4_002,pot200d_002,pot200d_006,pot_001'
+PSEUDO_EXPERIMENT = 'b4_002,kdb3_003'
 PSEUDO_THRESHOLD = None
-BATCH_SIZE = 16
-IMAGE_SIZE = 768
+BATCH_SIZE = 8
+IMAGE_SIZE = 1024
 NUM_WORKERS = 12
 NUM_EPOCHS = [2, 16]  # , 3]
 STAGE = ['warmup', 'train']  # , 'cooldown']
@@ -66,7 +66,7 @@ PARAMS = {
         'drop_path_rate': 0.2,
         'attention': None
     }),
-    'loss': ('DistillationLoss', {'temperature': 2.0}),
+    'loss': 'BCEWithLogitsLoss',
     'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
     'device': [f'cuda:{i}' for i in range(torch.cuda.device_count())],
     'amp': USE_AMP,

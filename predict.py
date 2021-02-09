@@ -76,7 +76,8 @@ def make_submission(experiments):
         subm_df.to_csv('submission.csv')
     else:
         test_prediction_dir = config.predictions_dir / ','.join(experiments) / 'test'
-        remove_than_make_dir(test_prediction_dir)
+        if not test_prediction_dir.exists():
+            test_prediction_dir.mkdir(parents=True, exist_ok=True)
         subm_df.to_csv(test_prediction_dir / "submission.csv")
 
 
