@@ -11,25 +11,20 @@ from src import config
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--experiment', required=True, type=str)
-parser.add_argument('--folds', default='', type=str)
 args = parser.parse_args()
 
 EXPERIMENT = args.experiment
-BATCH_SIZE = 4
+BATCH_SIZE = 8
 DEVICE = 'cuda'
 NUM_WORKERS = 2 if config.kernel_mode else 8
 CHEST_XRAYS_PREDICTION_DIR = config.predictions_dir / EXPERIMENT / 'chest_xrays'
-if args.folds:
-    FOLDS = [int(fold) for fold in args.folds.split(',')]
-else:
-    FOLDS = config.folds
 
 
 def classification_pred():
     print(f"Start predict: {EXPERIMENT}")
 
     pred_lst = []
-    for fold in FOLDS:
+    for fold in config.folds:
         print("Predict fold", fold)
         model_path = get_best_model_path(
             config.experiments_dir / EXPERIMENT / f'fold_{fold}'

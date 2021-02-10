@@ -15,8 +15,10 @@ from argus.callbacks import (
 
 from src.datasets import (
     RanzcrDataset,
+    RandomDataset,
     get_folds_data,
-    get_test_data
+    get_test_data,
+    get_chest_xrays_data
 )
 from src.transforms import get_transforms
 from src.argus_model import RanzcrModel
@@ -29,8 +31,9 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='all', type=str)
 args = parser.parse_args()
 
-PSEUDO_EXPERIMENT = 'b4_002,kdb3_003'
+PSEUDO_EXPERIMENT = 'b4_002'
 PSEUDO_THRESHOLD = None
+PSEUDO_XRAYS_PROB = 0.2
 BATCH_SIZE = 8
 IMAGE_SIZE = 1024
 NUM_WORKERS = 12
@@ -46,9 +49,11 @@ SAVE_DIR = config.experiments_dir / args.experiment
 if PSEUDO_EXPERIMENT:
     PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'val' / 'preds.npz'
     TEST_PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'test'
+    XRAYS_PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'chest_xrays'
 else:
     PSEUDO = None
     TEST_PSEUDO = None
+    XRAYS_PSEUDO = None
 N_CHANNELS = 1
 
 
@@ -106,15 +111,28 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
                                          transform=train_transfrom,
                                          pseudo_label=pseudo,
                                          pseudo_threshold=PSEUDO_THRESHOLD)
-            train_datasets += [test_dataset]
-        train_dataset = RanzcrDataset(folds_data,
+            train_datasets.append(test_dataset)
+        train_folds_dataset = RanzcrDataset(folds_data,
                                       folds=train_folds,
                                       transform=train_transfrom,
                                       pseudo_label=pseudo,
                                       pseudo_threshold=PSEUDO_THRESHOLD)
-        train_datasets += [train_dataset]
-
+        train_datasets.append(train_folds_dataset)
         train_dataset = ConcatDataset(train_datasets)
+
+        if PSEUDO_XRAYS_PROB and pseudo:
+            xrays_data = get_chest_xrays_data(
+                pseudo_label_path=XRAYS_PSEUDO / f'fold_{val_folds[0]}' / 'preds.npz'
+            )
+            xrays_dataset = RanzcrDataset(xrays_data,
+                                          transform=train_transfrom,
+                                          pseudo_label=pseudo,
+                                          pseudo_threshold=PSEUDO_THRESHOLD)
+            train_dataset = RandomDataset(
+                [train_dataset, xrays_dataset],
+                len(train_dataset),
+                probs=[1.0 - PSEUDO_XRAYS_PROB, PSEUDO_XRAYS_PROB]
+            )
 
         val_dataset = RanzcrDataset(folds_data,
                                     folds=val_folds,
