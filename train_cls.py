@@ -37,7 +37,7 @@ PSEUDO_XRAYS_PROB = 0.2
 BATCH_SIZE = 8
 IMAGE_SIZE = 1024
 NUM_WORKERS = 12
-NUM_EPOCHS = [2, 16]  # , 3]
+NUM_EPOCHS = [2, 19]  # , 3]
 STAGE = ['warmup', 'train']  # , 'cooldown']
 BASE_LR = 5e-4
 MIN_BASE_LR = 5e-6
@@ -124,6 +124,7 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
             xrays_data = get_chest_xrays_data(
                 pseudo_label_path=XRAYS_PSEUDO / f'fold_{val_folds[0]}' / 'preds.npz'
             )
+            print(f"Chest Xrays data len: {len(xrays_data)}")
             xrays_dataset = RanzcrDataset(xrays_data,
                                           transform=train_transfrom,
                                           pseudo_label=pseudo,
