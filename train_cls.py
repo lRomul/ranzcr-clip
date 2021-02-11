@@ -29,9 +29,9 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='all', type=str)
 args = parser.parse_args()
 
-PSEUDO_EXPERIMENT = 'b4_002,kdb3_003'
+PSEUDO_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
-BATCH_SIZE = 8
+BATCH_SIZE = 18
 IMAGE_SIZE = 1024
 NUM_WORKERS = 12
 NUM_EPOCHS = [2, 16]  # , 3]
@@ -58,11 +58,11 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('TimmModel', {
-        'model_name': 'tf_efficientnet_b3_ns',
+        'model_name': 'tf_efficientnet_b5_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.3,
+        'drop_rate': 0.4,
         'drop_path_rate': 0.2,
         'attention': None
     }),
