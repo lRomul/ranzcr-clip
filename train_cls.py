@@ -1,8 +1,12 @@
+import os
 import json
 import argparse
 
 import torch
-from torch.utils.data import DataLoader, ConcatDataset
+import torch.distributed as dist
+from torch.nn import SyncBatchNorm
+from torch.utils.data import DataLoader, ConcatDataset, DistributedSampler
+from torch.nn.parallel import DistributedDataParallel
 
 from argus.callbacks import (
     MonitorCheckpoint,
@@ -10,7 +14,8 @@ from argus.callbacks import (
     LoggingToCSV,
     CosineAnnealingLR,
     LambdaLR,
-    EarlyStopping
+    EarlyStopping,
+    on_epoch_complete
 )
 
 from src.datasets import (
@@ -23,15 +28,27 @@ from src.argus_model import RanzcrModel
 from src.ema import EmaMonitorCheckpoint, ModelEma
 from src import config
 
+torch.backends.cudnn.benchmark = True
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='all', type=str)
+parser.add_argument("--local_rank", default=0, type=int)
 args = parser.parse_args()
+
+args.distributed = False
+if 'WORLD_SIZE' in os.environ:
+    args.distributed = int(os.environ['WORLD_SIZE']) > 1
+
+if args.distributed:
+    torch.cuda.set_device(args.local_rank)
+    torch.distributed.init_process_group(backend='nccl',
+                                         init_method='env://')
 
 PSEUDO_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
-BATCH_SIZE = 6
+BATCH_SIZE = 3
 IMAGE_SIZE = 1024
 NUM_WORKERS = 12
 NUM_EPOCHS = [2, 16]  # , 3]
@@ -42,6 +59,12 @@ USE_AMP = True
 USE_EMA = True
 EMA_DECAY = 0.9997
 SAVE_DIR = config.experiments_dir / args.experiment
+
+if args.distributed:
+    WORLD_BATCH_SIZE = BATCH_SIZE * dist.get_world_size()
+else:
+    WORLD_BATCH_SIZE = BATCH_SIZE
+print("World batch size:", WORLD_BATCH_SIZE)
 
 if PSEUDO_EXPERIMENT:
     PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'val' / 'preds.npz'
@@ -67,8 +90,10 @@ PARAMS = {
         'attention': None
     }),
     'loss': 'BCEWithLogitsLoss',
-    'optimizer': ('AdamW', {'lr': get_lr(BASE_LR, BATCH_SIZE)}),
-    'device': [f'cuda:{i}' for i in range(torch.cuda.device_count())],
+    'optimizer': ('AdamW', {
+        'lr': get_lr(BASE_LR, WORLD_BATCH_SIZE)
+    }),
+    'device': 'cuda',
     'amp': USE_AMP,
     'clip_grad': False,
     'image_size': IMAGE_SIZE,
@@ -76,10 +101,21 @@ PARAMS = {
 }
 
 
-def train_fold(save_dir, train_folds, val_folds, folds_data):
+def train_fold(save_dir, train_folds, val_folds, folds_data,
+               local_rank=0, distributed=False):
     model = RanzcrModel(PARAMS)
     if 'pretrained' in model.params['nn_module'][1]:
         model.params['nn_module'][1]['pretrained'] = False
+
+    if distributed:
+        model.nn_module = SyncBatchNorm.convert_sync_batchnorm(model.nn_module)
+        model.nn_module = DistributedDataParallel(model.nn_module.to(local_rank),
+                                                  device_ids=[local_rank],
+                                                  output_device=local_rank)
+        if local_rank:
+            model.logger.disabled = True
+    else:
+        model.set_device('cuda')
 
     if USE_EMA:
         print(f"EMA decay: {EMA_DECAY}")
@@ -116,19 +152,29 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
 
         train_dataset = ConcatDataset(train_datasets)
 
+        train_sampler = None
+        if distributed:
+            train_sampler = DistributedSampler(train_dataset,
+                                               num_replicas=dist.get_world_size(),
+                                               rank=local_rank,
+                                               shuffle=True)
+
         val_dataset = RanzcrDataset(folds_data,
                                     folds=val_folds,
                                     transform=val_transform)
         train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
                                   shuffle=True, drop_last=True,
-                                  num_workers=NUM_WORKERS)
+                                  num_workers=NUM_WORKERS,
+                                  sampler=train_sampler)
         val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE * 2,
                                 shuffle=False, num_workers=NUM_WORKERS)
 
-        callbacks = [
-            LoggingToFile(save_dir / 'log.txt', append=True),
-            LoggingToCSV(save_dir / 'log.csv', append=True)
-        ]
+        callbacks = []
+        if local_rank == 0:
+            callbacks += [
+                LoggingToFile(save_dir / 'log.txt', append=True),
+                LoggingToCSV(save_dir / 'log.csv', append=True)
+            ]
 
         num_iterations = (len(train_dataset) // BATCH_SIZE) * num_epochs
         if stage == 'warmup':
@@ -141,15 +187,25 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
                 CosineAnnealingLR(T_max=num_iterations,
                                   eta_min=get_lr(MIN_BASE_LR, BATCH_SIZE),
                                   step_on_iteration=True),
-                checkpoint(save_dir, monitor='val_roc_auc',
-                           max_saves=1, better='max'),
                 EarlyStopping(monitor='val_roc_auc', patience=2)
             ]
+            if local_rank == 0:
+                callbacks += [
+                    checkpoint(save_dir, monitor='val_roc_auc',
+                               max_saves=1, better='max')
+                ]
         elif stage == 'cooldown':
-            callbacks += [
-                checkpoint(save_dir, monitor=f'val_roc_auc',
-                           max_saves=1, better='max')
-            ]
+            if local_rank == 0:
+                callbacks += [
+                    checkpoint(save_dir, monitor=f'val_roc_auc',
+                               max_saves=1, better='max')
+                ]
+
+        if distributed:
+            @on_epoch_complete
+            def schedule_sampler(state):
+                train_sampler.set_epoch(state.epoch + 1)
+            callbacks += [schedule_sampler]
 
         model.fit(train_loader,
                   val_loader=val_loader,
