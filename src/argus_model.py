@@ -2,7 +2,7 @@ import torch
 import timm
 
 import argus
-from argus.utils import deep_to, deep_detach
+from argus.utils import deep_to, deep_detach, deep_chunk
 from argus.loss import pytorch_losses
 
 from src.models.timm import TimmModel
@@ -22,25 +22,36 @@ class RanzcrModel(argus.Model):
 
     def __init__(self, params: dict):
         super().__init__(params)
-        self.amp = 'amp' in params and params['amp']
-        self.clip_grad = 'clip_grad' in params and params['clip_grad']
-        self.scaler = torch.cuda.amp.GradScaler()
+        self.iter_size = (1 if 'iter_size' not in self.params
+                          else int(self.params['iter_size']))
+        self.amp = (False if 'amp' not in self.params
+                    else bool(self.params['amp']))
+        self.scaler = torch.cuda.amp.GradScaler() if self.amp else None
         self.model_ema = None
 
     def train_step(self, batch, state) -> dict:
         self.train()
         self.optimizer.zero_grad()
-        input, target = deep_to(batch, device=self.device, non_blocking=True)
-        with torch.cuda.amp.autocast(enabled=self.amp):
-            prediction = self.nn_module(input)
-            loss = self.loss(prediction, target)
-        self.scaler.scale(loss).backward()
-        if self.clip_grad:
-            self.scaler.unscale_(self.optimizer)
-            torch.nn.utils.clip_grad_norm_(self.nn_module.parameters(),
-                                           max_norm=2.0, norm_type=2.0)
-        self.scaler.step(self.optimizer)
-        self.scaler.update()
+
+        # Gradient accumulation
+        for i, chunk_batch in enumerate(deep_chunk(batch, self.iter_size)):
+            input, target = deep_to(chunk_batch, self.device, non_blocking=True)
+            with torch.cuda.amp.autocast(enabled=self.amp):
+                prediction = self.nn_module(input)
+                loss = self.loss(prediction, target)
+
+            if self.amp:
+                # https://pytorch.org/docs/stable/notes/amp_examples.html#gradient-accumulation
+                loss = loss / self.iter_size
+                self.scaler.scale(loss).backward()
+            else:
+                loss.backward()
+
+        if self.amp:
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
+        else:
+            self.optimizer.step()
 
         if self.model_ema is not None:
             self.model_ema.update(self.nn_module)

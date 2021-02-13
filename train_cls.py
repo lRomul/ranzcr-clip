@@ -48,9 +48,10 @@ if args.distributed:
 
 PSEUDO_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
-BATCH_SIZE = 4
+BATCH_SIZE = 3
+ITER_SIZE = 2
 IMAGE_SIZE = 1024
-NUM_WORKERS = 12
+NUM_WORKERS = 6
 NUM_EPOCHS = [2, 16]  # , 3]
 STAGE = ['warmup', 'train']  # , 'cooldown']
 BASE_LR = 5e-4
@@ -81,11 +82,11 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('TimmModel', {
-        'model_name': 'tf_efficientnet_b3_ns',
+        'model_name': 'tf_efficientnet_b7_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.3,
+        'drop_rate': 0.5,
         'drop_path_rate': 0.2,
         'attention': None
     }),
@@ -95,6 +96,7 @@ PARAMS = {
     }),
     'device': 'cuda',
     'amp': USE_AMP,
+    'iter_size': ITER_SIZE,
     'clip_grad': False,
     'image_size': IMAGE_SIZE,
     'draw_annotations': False
@@ -188,7 +190,7 @@ def train_fold(save_dir, train_folds, val_folds, folds_data,
                 CosineAnnealingLR(T_max=num_iterations,
                                   eta_min=get_lr(MIN_BASE_LR, BATCH_SIZE),
                                   step_on_iteration=True),
-                EarlyStopping(monitor='val_roc_auc', patience=2)
+                EarlyStopping(monitor='val_roc_auc', patience=1)
             ]
             if local_rank == 0:
                 callbacks += [
