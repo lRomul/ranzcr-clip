@@ -18,7 +18,7 @@ args = parser.parse_args()
 
 EXPERIMENT = args.experiment
 VAL_PREDICTION_DIR = config.predictions_dir / EXPERIMENT / 'val'
-BATCH_SIZE = 8
+BATCH_SIZE = 4
 DEVICE = 'cuda'
 
 
