@@ -48,7 +48,7 @@ if args.distributed:
 
 PSEUDO_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
-BATCH_SIZE = 3
+BATCH_SIZE = 4
 IMAGE_SIZE = 1024
 NUM_WORKERS = 12
 NUM_EPOCHS = [2, 16]  # , 3]
@@ -81,11 +81,11 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('TimmModel', {
-        'model_name': 'tf_efficientnet_b7_ns',
+        'model_name': 'tf_efficientnet_b3_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.5,
+        'drop_rate': 0.3,
         'drop_path_rate': 0.2,
         'attention': None
     }),
@@ -163,7 +163,8 @@ def train_fold(save_dir, train_folds, val_folds, folds_data,
                                     folds=val_folds,
                                     transform=val_transform)
         train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
-                                  shuffle=True, drop_last=True,
+                                  shuffle=train_sampler is None,
+                                  drop_last=True,
                                   num_workers=NUM_WORKERS,
                                   sampler=train_sampler)
         val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE * 2,
@@ -240,4 +241,5 @@ if __name__ == "__main__":
         save_fold_dir = SAVE_DIR / f'fold_{fold}'
         print(f"Val folds: {val_folds}, Train folds: {train_folds}")
         print(f"Fold save dir {save_fold_dir}")
-        train_fold(save_fold_dir, train_folds, val_folds, folds_data)
+        train_fold(save_fold_dir, train_folds, val_folds, folds_data,
+                   local_rank=args.local_rank, distributed=args.distributed)
