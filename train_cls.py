@@ -49,7 +49,7 @@ if args.distributed:
 PSEUDO_EXPERIMENT = 'b5_002'
 PSEUDO_THRESHOLD = None
 BATCH_SIZE = 8
-ITER_SIZE = 1
+ITER_SIZE = 2
 IMAGE_SIZE = 1024
 NUM_WORKERS = 6
 NUM_EPOCHS = [2, 16, 3]
@@ -82,11 +82,11 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('TimmModel', {
-        'model_name': 'tf_efficientnet_b4_ns',
+        'model_name': 'tf_efficientnet_b3_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.4,
+        'drop_rate': 0.3,
         'drop_path_rate': 0.2,
         'attention': None
     }),
@@ -169,7 +169,7 @@ def train_fold(save_dir, train_folds, val_folds, folds_data,
                                   drop_last=True,
                                   num_workers=NUM_WORKERS,
                                   sampler=train_sampler)
-        val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE * 2,
+        val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE * 2 // ITER_SIZE,
                                 shuffle=False, num_workers=NUM_WORKERS)
 
         callbacks = []
