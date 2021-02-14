@@ -159,6 +159,12 @@ def get_chest_xrays_data(classes=None, pseudo_label_path=None):
     return test_data
 
 
+def set_random_seed(index):
+    seed = int(time.time() * 1000.0) + index
+    random.seed(seed)
+    np.random.seed(seed % (2**32 - 1))
+
+
 class RanzcrDataset(Dataset):
     def __init__(self,
                  data,
@@ -189,11 +195,6 @@ class RanzcrDataset(Dataset):
             return len(self.data)
         else:
             return self.length
-
-    def _set_random_seed(self, index):
-        seed = int(time.time() * 1000.0) + index
-        random.seed(seed)
-        np.random.seed(seed % (2**32 - 1))
 
     def _get_sample(self, index):
         sample = self.data[index]
@@ -235,7 +236,7 @@ class RanzcrDataset(Dataset):
         return image, target
 
     def __getitem__(self, index):
-        self._set_random_seed(index)
+        set_random_seed(index)
         if self.length is not None:
             index = np.random.randint(len(self.data))
         image, target = self._get_sample(index)
@@ -248,3 +249,23 @@ class RanzcrDataset(Dataset):
             return image, target
         else:
             return image
+
+
+class RandomDataset(Dataset):
+    def __init__(self, datasets, length, probs=None):
+        self.datasets = datasets
+        self.probs = probs
+        self.length = length
+
+    def __len__(self):
+        return self.length
+
+    def __getitem__(self, index):
+        set_random_seed(index)
+        dataset_idx = np.random.choice(
+            range(len(self.datasets)),
+            p=self.probs
+        )
+        dataset = self.datasets[dataset_idx]
+        index = random.randint(0, len(dataset) - 1)
+        return dataset[index]

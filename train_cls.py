@@ -1,4 +1,3 @@
-import os
 import json
 import argparse
 
@@ -20,8 +19,10 @@ from argus.callbacks import (
 
 from src.datasets import (
     RanzcrDataset,
+    RandomDataset,
     get_folds_data,
-    get_test_data
+    get_test_data,
+    get_chest_xrays_data
 )
 from src.transforms import get_transforms
 from src.argus_model import RanzcrModel
@@ -48,6 +49,7 @@ if args.distributed:
 
 PSEUDO_EXPERIMENT = 'b5_002'
 PSEUDO_THRESHOLD = None
+PSEUDO_XRAYS_PROB = 0.2
 BATCH_SIZE = 8
 ITER_SIZE = 2
 IMAGE_SIZE = 1024
@@ -70,9 +72,11 @@ print("World batch size:", WORLD_BATCH_SIZE)
 if PSEUDO_EXPERIMENT:
     PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'val' / 'preds.npz'
     TEST_PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'test'
+    XRAYS_PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'chest_xrays'
 else:
     PSEUDO = None
     TEST_PSEUDO = None
+    XRAYS_PSEUDO = None
 N_CHANNELS = 1
 
 
@@ -144,15 +148,29 @@ def train_fold(save_dir, train_folds, val_folds, folds_data,
                                          transform=train_transfrom,
                                          pseudo_label=pseudo,
                                          pseudo_threshold=PSEUDO_THRESHOLD)
-            train_datasets += [test_dataset]
-        train_dataset = RanzcrDataset(folds_data,
+            train_datasets.append(test_dataset)
+        train_folds_dataset = RanzcrDataset(folds_data,
                                       folds=train_folds,
                                       transform=train_transfrom,
                                       pseudo_label=pseudo,
                                       pseudo_threshold=PSEUDO_THRESHOLD)
-        train_datasets += [train_dataset]
-
+        train_datasets.append(train_folds_dataset)
         train_dataset = ConcatDataset(train_datasets)
+
+        if PSEUDO_XRAYS_PROB and pseudo:
+            xrays_data = get_chest_xrays_data(
+                pseudo_label_path=XRAYS_PSEUDO / f'fold_{val_folds[0]}' / 'preds.npz'
+            )
+            print(f"Chest Xrays data len: {len(xrays_data)}")
+            xrays_dataset = RanzcrDataset(xrays_data,
+                                          transform=train_transfrom,
+                                          pseudo_label=pseudo,
+                                          pseudo_threshold=PSEUDO_THRESHOLD)
+            train_dataset = RandomDataset(
+                [train_dataset, xrays_dataset],
+                len(train_dataset),
+                probs=[1.0 - PSEUDO_XRAYS_PROB, PSEUDO_XRAYS_PROB]
+            )
 
         train_sampler = None
         if distributed:
