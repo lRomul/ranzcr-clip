@@ -14,9 +14,9 @@ parser.add_argument('--experiment', required=True, type=str)
 args = parser.parse_args()
 
 EXPERIMENT = args.experiment
-BATCH_SIZE = 8
+BATCH_SIZE = 4
 DEVICE = 'cuda'
-NUM_WORKERS = 2 if config.kernel_mode else 8
+NUM_WORKERS = 8
 CHEST_XRAYS_PREDICTION_DIR = config.predictions_dir / EXPERIMENT / 'chest_xrays'
 
 
