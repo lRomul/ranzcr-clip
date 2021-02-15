@@ -1,4 +1,5 @@
 import os
+import time
 import json
 import argparse
 
@@ -264,3 +265,7 @@ if __name__ == "__main__":
         print(f"Fold save dir {save_fold_dir}")
         train_fold(save_fold_dir, train_folds, val_folds, folds_data,
                    local_rank=args.local_rank, distributed=args.distributed)
+
+        time.sleep(6)
+        torch.cuda.empty_cache()
+        time.sleep(6)
