@@ -53,8 +53,8 @@ PSEUDO_EXPERIMENT = 'b7_002'
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.2
 BATCH_SIZE = 8
-ITER_SIZE = 2
-IMAGE_SIZE = 1024
+ITER_SIZE = 1
+IMAGE_SIZE = 768
 NUM_WORKERS = 6
 NUM_EPOCHS = [2, 25, 3]
 STAGE = ['warmup', 'train', 'cooldown']
@@ -65,8 +65,9 @@ USE_EMA = True
 EMA_DECAY = 0.9997
 SAVE_DIR = config.experiments_dir / args.experiment
 
+WORLD_SIZE = dist.get_world_size()
 if args.distributed:
-    WORLD_BATCH_SIZE = BATCH_SIZE * dist.get_world_size()
+    WORLD_BATCH_SIZE = BATCH_SIZE * WORLD_SIZE
 else:
     WORLD_BATCH_SIZE = BATCH_SIZE
 print("World batch size:", WORLD_BATCH_SIZE)
@@ -177,7 +178,7 @@ def train_fold(save_dir, train_folds, val_folds, folds_data,
         train_sampler = None
         if distributed:
             train_sampler = DistributedSampler(train_dataset,
-                                               num_replicas=dist.get_world_size(),
+                                               num_replicas=WORLD_SIZE,
                                                rank=local_rank,
                                                shuffle=True)
 
@@ -189,8 +190,12 @@ def train_fold(save_dir, train_folds, val_folds, folds_data,
                                   drop_last=True,
                                   num_workers=NUM_WORKERS,
                                   sampler=train_sampler)
-        val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE * 2 // ITER_SIZE,
-                                shuffle=False, num_workers=NUM_WORKERS)
+        val_loader = DataLoader(
+            val_dataset,
+            batch_size=int(BATCH_SIZE * 2 / ITER_SIZE / WORLD_SIZE),
+            shuffle=False,
+            num_workers=NUM_WORKERS
+        )
 
         callbacks = []
         if local_rank == 0:
