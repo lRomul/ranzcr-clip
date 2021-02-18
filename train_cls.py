@@ -65,10 +65,11 @@ USE_EMA = True
 EMA_DECAY = 0.9997
 SAVE_DIR = config.experiments_dir / args.experiment
 
-WORLD_SIZE = dist.get_world_size()
 if args.distributed:
+    WORLD_SIZE = dist.get_world_size()
     WORLD_BATCH_SIZE = BATCH_SIZE * WORLD_SIZE
 else:
+    WORLD_SIZE = 1
     WORLD_BATCH_SIZE = BATCH_SIZE
 print("World batch size:", WORLD_BATCH_SIZE)
 
