@@ -104,7 +104,7 @@ PARAMS = {
     'device': 'cuda',
     'amp': USE_AMP,
     'iter_size': ITER_SIZE,
-    'clip_grad': False,
+    'clip_grad': 0.01,
     'image_size': IMAGE_SIZE,
     'draw_annotations': False
 }

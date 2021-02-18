@@ -7,6 +7,7 @@ from argus.loss import pytorch_losses
 
 from src.models.timm import TimmModel
 from src.loss import DistillationLoss
+from src.agc import adaptive_clip_grad
 
 
 class RanzcrModel(argus.Model):
@@ -26,6 +27,8 @@ class RanzcrModel(argus.Model):
                           else int(self.params['iter_size']))
         self.amp = (False if 'amp' not in self.params
                     else bool(self.params['amp']))
+        self.clip_grad = (0. if 'clip_grad' not in self.params
+                          else float(self.params['clip_grad']))
         self.scaler = torch.cuda.amp.GradScaler() if self.amp else None
         self.model_ema = None
 
@@ -39,13 +42,19 @@ class RanzcrModel(argus.Model):
             with torch.cuda.amp.autocast(enabled=self.amp):
                 prediction = self.nn_module(input)
                 loss = self.loss(prediction, target)
+                loss = loss / self.iter_size
 
             if self.amp:
-                # https://pytorch.org/docs/stable/notes/amp_examples.html#gradient-accumulation
-                loss = loss / self.iter_size
                 self.scaler.scale(loss).backward()
             else:
                 loss.backward()
+
+        if self.amp:
+            self.scaler.unscale_(self.optimizer)
+
+        if self.clip_grad:
+            adaptive_clip_grad(self.nn_module.parameters(),
+                               clip_factor=self.clip_grad)
 
         if self.amp:
             self.scaler.step(self.optimizer)
