@@ -50,12 +50,12 @@ if args.distributed:
 
 PSEUDO_EXPERIMENT = 'b7_002'
 PSEUDO_THRESHOLD = None
-PSEUDO_XRAYS_PROB = 0.2
+PSEUDO_XRAYS_PROB = 0.0
 BATCH_SIZE = 8
 ITER_SIZE = 1
 IMAGE_SIZE = 1024
 NUM_WORKERS = 6
-NUM_EPOCHS = [2, 21, 3]
+NUM_EPOCHS = [2, 16, 3]
 STAGE = ['warmup', 'train', 'cooldown']
 BASE_LR = 5e-4
 MIN_BASE_LR = 5e-6
