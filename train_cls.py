@@ -51,11 +51,11 @@ if args.distributed:
 PSEUDO_EXPERIMENT = 'b7_002'
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.0
-BATCH_SIZE = 6
-ITER_SIZE = 2
+BATCH_SIZE = 8
+ITER_SIZE = 8
 IMAGE_SIZE = 1024
 NUM_WORKERS = 6
-NUM_EPOCHS = [2, 16, 3]
+NUM_EPOCHS = [1, 7, 2]
 STAGE = ['warmup', 'train', 'cooldown']
 BASE_LR = 5e-4
 MIN_BASE_LR = 5e-6
@@ -88,12 +88,12 @@ def get_lr(base_lr, batch_size):
 
 
 PARAMS = {
-    'nn_module': ('TimmModel', {
-        'model_name': 'tf_efficientnet_b7_ns',
+    'nn_module': ('timm', {
+        'model_name': 'dm_nfnet_f1',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.5,
+        'drop_rate': 0.3,
         'drop_path_rate': 0.2,
         'attention': None
     }),
@@ -104,7 +104,7 @@ PARAMS = {
     'device': 'cuda',
     'amp': USE_AMP,
     'iter_size': ITER_SIZE,
-    'clip_grad': 0.0,
+    'clip_grad': 0.01,
     'image_size': IMAGE_SIZE,
     'draw_annotations': False
 }
