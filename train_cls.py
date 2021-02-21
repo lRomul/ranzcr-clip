@@ -52,7 +52,7 @@ PSEUDO_EXPERIMENT = 'b7_002'
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.0
 BATCH_SIZE = 6
-ITER_SIZE = 2
+ITER_SIZE = 1
 IMAGE_SIZE = 1024
 NUM_WORKERS = 6
 NUM_EPOCHS = [2, 16, 3]
@@ -89,11 +89,11 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('TimmModel', {
-        'model_name': 'tf_efficientnet_b7_ns',
+        'model_name': 'tf_efficientnet_b5_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.5,
+        'drop_rate': 0.4,
         'drop_path_rate': 0.2,
         'attention': None
     }),

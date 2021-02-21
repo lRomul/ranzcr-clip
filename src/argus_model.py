@@ -49,10 +49,9 @@ class RanzcrModel(argus.Model):
             else:
                 loss.backward()
 
-        if self.amp:
-            self.scaler.unscale_(self.optimizer)
-
         if self.clip_grad:
+            if self.amp:
+                self.scaler.unscale_(self.optimizer)
             adaptive_clip_grad(self.nn_module.parameters(),
                                clip_factor=self.clip_grad)
 
