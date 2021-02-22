@@ -57,8 +57,8 @@ IMAGE_SIZE = 1024
 NUM_WORKERS = 6
 NUM_EPOCHS = [1, 12, 2]
 STAGE = ['warmup', 'train', 'cooldown']
-BASE_LR = 2.5e-4
-MIN_BASE_LR = 2.5e-6
+BASE_LR = 1e-4
+MIN_BASE_LR = 1e-6
 USE_AMP = True
 USE_EMA = True
 EMA_DECAY = 0.9997
@@ -104,7 +104,7 @@ PARAMS = {
     'device': 'cuda',
     'amp': USE_AMP,
     'iter_size': ITER_SIZE,
-    'clip_grad': 0.03,
+    'clip_grad': 0.01,
     'image_size': IMAGE_SIZE,
     'draw_annotations': False
 }
