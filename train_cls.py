@@ -52,7 +52,7 @@ PSEUDO_EXPERIMENT = 'b7_002'
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.0
 BATCH_SIZE = 8
-ITER_SIZE = 8
+ITER_SIZE = 4
 IMAGE_SIZE = 1024
 NUM_WORKERS = 6
 NUM_EPOCHS = [1, 12, 2]
@@ -104,7 +104,7 @@ PARAMS = {
     'device': 'cuda',
     'amp': USE_AMP,
     'iter_size': ITER_SIZE,
-    'clip_grad': 0.01,
+    'clip_grad': 0.002,
     'image_size': IMAGE_SIZE,
     'draw_annotations': False
 }
