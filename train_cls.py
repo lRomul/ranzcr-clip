@@ -46,7 +46,8 @@ if 'WORLD_SIZE' in os.environ:
 
 if args.distributed:
     torch.cuda.set_device(args.local_rank)
-    torch.distributed.init_process_group(backend='nccl', init_method='env://')
+    torch.distributed.init_process_group(backend='nccl',
+                                         init_method='env://')
 
 PSEUDO_EXPERIMENT = 'b7_002'
 PSEUDO_THRESHOLD = None
