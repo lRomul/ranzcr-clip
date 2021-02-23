@@ -48,18 +48,18 @@ if args.distributed:
     torch.cuda.set_device(args.local_rank)
     torch.distributed.init_process_group(backend='nccl', init_method='env://')
 
-PSEUDO_EXPERIMENT = 'b7_002'
+PSEUDO_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.0
 BATCH_SIZE = 6
-ITER_SIZE = 2
+ITER_SIZE = 3
 IMAGE_SIZE = 1024
 NUM_WORKERS = 6
-NUM_EPOCHS = [2, 18, 3]
-STAGE = ['warmup', 'train', 'cooldown']
+NUM_EPOCHS = [2, 16]  # , 3]
+STAGE = ['warmup', 'train']  # , 'cooldown']
 BASE_LR = 5e-4
 MIN_BASE_LR = 5e-6
-USE_AMP = False
+USE_AMP = True
 USE_EMA = True
 EMA_DECAY = 0.9997
 SAVE_DIR = config.experiments_dir / args.experiment
@@ -89,11 +89,11 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('TimmModel', {
-        'model_name': 'tf_efficientnet_b4_ns',
+        'model_name': 'tf_efficientnet_b8_ap',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.4,
+        'drop_rate': 0.5,
         'drop_path_rate': 0.2,
         'attention': None
     }),
@@ -201,7 +201,8 @@ def train_fold(save_dir, train_folds, val_folds, folds_data,
         if local_rank == 0:
             callbacks += [
                 LoggingToFile(save_dir / 'log.txt', append=True),
-                LoggingToCSV(save_dir / 'log.csv', append=True)
+                LoggingToCSV(save_dir / 'log.csv', append=True),
+                EarlyStopping(monitor='val_roc_auc', patience=1)
             ]
 
         num_iterations = (len(train_dataset) // BATCH_SIZE) * num_epochs
@@ -214,8 +215,7 @@ def train_fold(save_dir, train_folds, val_folds, folds_data,
             callbacks += [
                 CosineAnnealingLR(T_max=num_iterations,
                                   eta_min=get_lr(MIN_BASE_LR, BATCH_SIZE),
-                                  step_on_iteration=True),
-                EarlyStopping(monitor='val_roc_auc', patience=1)
+                                  step_on_iteration=True)
             ]
             if local_rank == 0:
                 callbacks += [

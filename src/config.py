@@ -26,12 +26,6 @@ experiments_dir = output_data_dir / 'experiments'
 predictions_dir = output_data_dir / 'predictions'
 train_visualizations_dir = output_data_dir / 'train_visualizations'
 
-segm_dir = output_data_dir / 'segm'
-segm_experiments_dir = segm_dir / 'experiments'
-segm_predictions_dir = segm_dir / 'predictions'
-segm_train_lung_masks_dir = segm_dir / 'train_lung_masks'
-segm_lung_contours_csv_path = segm_dir / 'RANZCR_CLiP_lung_contours.csv'
-
 nih_chest_xrays_dir = input_data_dir / 'nih-chest-xrays'
 
 classes = [
