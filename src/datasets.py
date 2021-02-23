@@ -24,10 +24,7 @@ def load_pseudo_label(path):
     return pseudo_label_dict
 
 
-def get_folds_data(lung_masks_dir=config.segm_train_lung_masks_dir,
-                   pseudo_label_path=None):
-    lung_masks_dir = Path(lung_masks_dir)
-
+def get_folds_data(pseudo_label_path=None):
     if not config.train_folds_path.exists():
         make_folds()
 
@@ -42,7 +39,6 @@ def get_folds_data(lung_masks_dir=config.segm_train_lung_masks_dir,
         study_id = sample['StudyInstanceUID']
         image_name = study_id + '.jpg'
         sample['image_path'] = str(config.train_dir / image_name)
-        sample['lung_mask_path'] = str(lung_masks_dir / image_name)
         sample['annotations'] = list()
         if study_id in pseudo_label_dict:
             sample['pseudo_label'] = pseudo_label_dict[study_id]
@@ -99,7 +95,7 @@ def draw_visualization(sample):
     return image
 
 
-def get_test_data(lung_masks_dir=None, pseudo_label_path=None):
+def get_test_data(pseudo_label_path=None):
     test_data = []
 
     pseudo_label_dict = dict()
@@ -112,9 +108,6 @@ def get_test_data(lung_masks_dir=None, pseudo_label_path=None):
             'image_path': image_path,
             'StudyInstanceUID': study_id,
         }
-        if lung_masks_dir is not None:
-            sample['lung_mask_path'] = str(Path(lung_masks_dir)
-                                           / Path(image_path).name)
         if study_id in pseudo_label_dict:
             sample['pseudo_label'] = pseudo_label_dict[study_id]
         else:
@@ -171,7 +164,6 @@ class RanzcrDataset(Dataset):
                  folds=None,
                  transform=None,
                  return_target=True,
-                 segm=False,
                  annotations=False,
                  pseudo_label=False,
                  pseudo_threshold=None,
@@ -181,7 +173,6 @@ class RanzcrDataset(Dataset):
         self.folds = folds
         self.transform = transform
         self.return_target = return_target
-        self.segm = segm
         self.annotations = annotations
         self.pseudo_label = pseudo_label
         self.pseudo_threshold = pseudo_threshold
@@ -201,8 +192,6 @@ class RanzcrDataset(Dataset):
 
         if self.annotations:
             image = cv2.imread(sample['image_path'], cv2.IMREAD_COLOR)
-            mask = cv2.imread(sample['lung_mask_path'], cv2.IMREAD_GRAYSCALE)
-            draw_mask(image, mask)
             draw_annotations(image, sample['annotations'])
         else:
             if self.transform.n_channels == 3:
@@ -215,11 +204,7 @@ class RanzcrDataset(Dataset):
         if not self.return_target:
             return image, None
 
-        if self.segm:
-            target = cv2.imread(sample['lung_mask_path'], cv2.IMREAD_GRAYSCALE)
-            target = (target > 128).astype('float32')
-            target = target[..., np.newaxis]
-        elif self.pseudo_label:
+        if self.pseudo_label:
             target = sample['pseudo_label']
             if self.pseudo_threshold is not None:
                 target = target > self.pseudo_threshold
@@ -241,10 +226,7 @@ class RanzcrDataset(Dataset):
             index = np.random.randint(len(self.data))
         image, target = self._get_sample(index)
         if self.transform is not None:
-            if self.segm and self.return_target:
-                image, target = self.transform(image, target)
-            else:
-                image = self.transform(image)
+            image = self.transform(image)
         if target is not None:
             return image, target
         else:
