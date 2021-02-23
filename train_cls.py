@@ -49,11 +49,11 @@ if args.distributed:
     torch.distributed.init_process_group(backend='nccl',
                                          init_method='env://')
 
-PSEUDO_EXPERIMENT = 'b7_002'
+PSEUDO_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.0
 BATCH_SIZE = 8
-ITER_SIZE = 4
+ITER_SIZE = 8
 IMAGE_SIZE = 1024
 NUM_WORKERS = 6
 NUM_EPOCHS = [1, 12, 2]
