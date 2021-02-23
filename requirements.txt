@@ -1,9 +1,8 @@
-timm==0.3.4
+git+https://github.com/rwightman/pytorch-image-models.git@48371a33b11fc30ca23ed8988619af08902b215b
 pytorch-argus==0.2.0
 segmentation-models-pytorch==0.1.3
 pretrainedmodels==0.7.4
-efficientnet-pytorch==0.6.3
-tqdm==4.56.0
+efficientnet-pytorch==0.7.0
+tqdm==4.57.0
 ipywidgets==7.6.3
 pytorch-toolbelt==0.4.1
-jedi==0.17.2
