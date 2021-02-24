@@ -53,7 +53,7 @@ PSEUDO_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.0
 BATCH_SIZE = 8
-ITER_SIZE = 4
+ITER_SIZE = 8
 IMAGE_SIZE = 1024
 NUM_WORKERS = 6
 NUM_EPOCHS = [2, 16]  # , 3]
@@ -89,12 +89,12 @@ def get_lr(base_lr, batch_size):
 
 
 PARAMS = {
-    'nn_module': ('TimmModel', {
-        'model_name': 'tf_efficientnet_b8_ap',
+    'nn_module': ('timm', {
+        'model_name': 'dm_nfnet_f1',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.5,
+        'drop_rate': 0.3,
         'drop_path_rate': 0.2,
         'attention': None
     }),
@@ -105,7 +105,7 @@ PARAMS = {
     'device': 'cuda',
     'amp': USE_AMP,
     'iter_size': ITER_SIZE,
-    'clip_grad': 0.0,
+    'clip_grad': 0.01,
     'image_size': IMAGE_SIZE,
     'draw_annotations': False
 }
