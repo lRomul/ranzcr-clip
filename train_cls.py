@@ -52,14 +52,14 @@ if args.distributed:
 PSEUDO_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.0
-BATCH_SIZE = 8
-ITER_SIZE = 8
+BATCH_SIZE = 9
+ITER_SIZE = 3
 IMAGE_SIZE = 1024
 NUM_WORKERS = 6
 NUM_EPOCHS = [2, 16]  # , 3]
 STAGE = ['warmup', 'train']  # , 'cooldown']
-BASE_LR = 1e-4
-MIN_BASE_LR = 1e-6
+BASE_LR = 5e-4
+MIN_BASE_LR = 5e-6
 USE_AMP = True
 USE_EMA = True
 EMA_DECAY = 0.9997
@@ -89,12 +89,12 @@ def get_lr(base_lr, batch_size):
 
 
 PARAMS = {
-    'nn_module': ('timm', {
-        'model_name': 'dm_nfnet_f1',
+    'nn_module': ('TimmModel', {
+        'model_name': 'tf_efficientnet_b7_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.3,
+        'drop_rate': 0.5,
         'drop_path_rate': 0.2,
         'attention': None
     }),
@@ -105,7 +105,7 @@ PARAMS = {
     'device': 'cuda',
     'amp': USE_AMP,
     'iter_size': ITER_SIZE,
-    'clip_grad': 0.01,
+    'clip_grad': 0.0,
     'image_size': IMAGE_SIZE,
     'draw_annotations': False
 }
@@ -272,6 +272,4 @@ if __name__ == "__main__":
         train_fold(save_fold_dir, train_folds, val_folds, folds_data,
                    local_rank=args.local_rank, distributed=args.distributed)
 
-        time.sleep(6)
-        torch.cuda.empty_cache()
         time.sleep(6)
