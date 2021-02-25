@@ -52,11 +52,11 @@ if args.distributed:
 PSEUDO_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.0
-BATCH_SIZE = 9
-ITER_SIZE = 3
+BATCH_SIZE = 6
+ITER_SIZE = 2
 IMAGE_SIZE = 1024
 NUM_WORKERS = 6
-NUM_EPOCHS = [2, 21]  # , 3]
+NUM_EPOCHS = [2, 24]  # , 3]
 STAGE = ['warmup', 'train']  # , 'cooldown']
 BASE_LR = 5e-4
 MIN_BASE_LR = 5e-6
@@ -94,8 +94,8 @@ PARAMS = {
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.7,
-        'drop_path_rate': 0.3,
+        'drop_rate': 0.8,
+        'drop_path_rate': 0.2,
         'attention': None
     }),
     'loss': 'BCEWithLogitsLoss',
@@ -105,7 +105,7 @@ PARAMS = {
     'device': 'cuda',
     'amp': USE_AMP,
     'iter_size': ITER_SIZE,
-    'clip_grad': 0.0,
+    'clip_grad': 0.01,
     'image_size': IMAGE_SIZE,
     'draw_annotations': False
 }
