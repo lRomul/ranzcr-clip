@@ -28,6 +28,7 @@ def get_transforms(train: bool, size: int, n_channels: int,
     std = (0.229, 0.224, 0.225)
     if train:
         transforms = Albumentations([
+            alb.Resize(size, size, interpolation=interpolation),
             alb.HorizontalFlip(p=0.5),
             alb.Normalize(mean=mean[:n_channels], std=[std[:n_channels]]),
             alb.pytorch.ToTensorV2()
