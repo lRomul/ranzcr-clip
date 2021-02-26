@@ -11,7 +11,7 @@ echo "EXP=$EXP, N_DEVICE=$N_DEVICE, DEVICE=$DEVICE, FOLDS=$FOLDS"
 for fold in ${FOLDS//[,]/ }
 do
   git fetch --all &&\
-  git reset --hard "$1" &&\
+  git reset --hard "$EXP" &&\
   make GPUS="'\"device=$DEVICE\"'" \
     COMMAND="python -m torch.distributed.launch --nproc_per_node=$N_DEVICE train_cls.py --experiment $EXP --folds $fold" \
     NAME="ranzcr-clip-$EXP-$fold"
