@@ -1,5 +1,4 @@
 import os
-import time
 import json
 import argparse
 
@@ -52,11 +51,11 @@ if args.distributed:
 PSEUDO_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.0
-BATCH_SIZE = 9
-ITER_SIZE = 3
+BATCH_SIZE = 12
+ITER_SIZE = 4
 IMAGE_SIZE = 1024
 NUM_WORKERS = 6
-NUM_EPOCHS = [2, 24]  # , 3]
+NUM_EPOCHS = [2, 16]  # , 3]
 STAGE = ['warmup', 'train']  # , 'cooldown']
 BASE_LR = 5e-4
 MIN_BASE_LR = 5e-6
@@ -94,7 +93,7 @@ PARAMS = {
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.8,
+        'drop_rate': 0.5,
         'drop_path_rate': 0.2,
         'attention': None
     }),
@@ -271,5 +270,3 @@ if __name__ == "__main__":
         print(f"Fold save dir {save_fold_dir}")
         train_fold(save_fold_dir, train_folds, val_folds, folds_data,
                    local_rank=args.local_rank, distributed=args.distributed)
-
-        time.sleep(6)
