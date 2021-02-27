@@ -51,12 +51,12 @@ if args.distributed:
 PSEUDO_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.0
-BATCH_SIZE = 8
-ITER_SIZE = 2
+BATCH_SIZE = 12
+ITER_SIZE = 4
 IMAGE_SIZE = 1024
 NUM_WORKERS = 6
-NUM_EPOCHS = [2, 16]  # , 3]
-STAGE = ['warmup', 'train']  # , 'cooldown']
+NUM_EPOCHS = [2, 20, 3]
+STAGE = ['warmup', 'train', 'cooldown']
 BASE_LR = 5e-4
 MIN_BASE_LR = 5e-6
 USE_AMP = True
@@ -89,7 +89,7 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('TimmModel', {
-        'model_name': 'tf_efficientnet_b6_ns',
+        'model_name': 'tf_efficientnet_b7_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,

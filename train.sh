@@ -8,9 +8,10 @@ FOLDS=${4:-0,1,2,3,4}
 
 echo "EXP=$EXP, N_DEVICE=$N_DEVICE, DEVICE=$DEVICE, FOLDS=$FOLDS"
 
+git fetch --all
+
 for fold in ${FOLDS//[,]/ }
 do
-  git fetch --all &&\
   git reset --hard "$EXP" &&\
   make GPUS="'\"device=$DEVICE\"'" \
     COMMAND="python -m torch.distributed.launch --nproc_per_node=$N_DEVICE train_cls.py --experiment $EXP --folds $fold" \
