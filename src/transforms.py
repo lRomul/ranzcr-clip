@@ -38,7 +38,10 @@ def get_transforms(train: bool, size: int, n_channels: int,
                                  scale_limit=0.2, rotate_limit=20,
                                  interpolation=interpolation,
                                  border_mode=border_mode),
-            alb.CoarseDropout(p=0.8, max_width=64, max_height=64, max_holes=16),
+            alb.CoarseDropout(p=0.3, max_holes=16,
+                              max_height=16, max_width=16),
+            alb.Cutout(p=0.3, max_h_size=32, max_w_size=32,
+                       fill_value=0., num_holes=16),
             alb.Normalize(mean=mean[:n_channels], std=[std[:n_channels]]),
             alb.pytorch.ToTensorV2()
         ])
