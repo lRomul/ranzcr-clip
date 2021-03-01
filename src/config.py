@@ -21,7 +21,7 @@ test_dir = input_data_dir / 'test'
 sample_submission_path = input_data_dir / 'sample_submission.csv'
 corrections_csv_path = input_data_dir / 'corrections.csv'
 
-train_folds_path = output_data_dir / 'train_folds_v2.csv'
+train_folds_path = output_data_dir / 'train_folds_v3.csv'
 experiments_dir = output_data_dir / 'experiments'
 predictions_dir = output_data_dir / 'predictions'
 train_visualizations_dir = output_data_dir / 'train_visualizations'
@@ -50,5 +50,5 @@ for cls, color in zip(classes, plt.get_cmap('Set3').colors):
     class2color[cls] = color
 
 n_classes = len(classes)
-n_folds = 5
+n_folds = 8
 folds = list(range(n_folds))
