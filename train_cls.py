@@ -51,11 +51,11 @@ if args.distributed:
 PSEUDO_EXPERIMENT = ''
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.0
-BATCH_SIZE = 12
-ITER_SIZE = 4
+BATCH_SIZE = 9
+ITER_SIZE = 3
 IMAGE_SIZE = 1024
 NUM_WORKERS = 6
-NUM_EPOCHS = [2, 20]  # , 3]
+NUM_EPOCHS = [2, 16]  # , 3]
 STAGE = ['warmup', 'train']  # , 'cooldown']
 BASE_LR = 5e-4
 MIN_BASE_LR = 5e-6
@@ -104,7 +104,7 @@ PARAMS = {
     'device': 'cuda',
     'amp': USE_AMP,
     'iter_size': ITER_SIZE,
-    'clip_grad': 0.01,
+    'clip_grad': 0.0,
     'image_size': IMAGE_SIZE,
     'draw_annotations': False
 }
@@ -153,10 +153,10 @@ def train_fold(save_dir, train_folds, val_folds, folds_data,
                                          pseudo_threshold=PSEUDO_THRESHOLD)
             train_datasets.append(test_dataset)
         train_folds_dataset = RanzcrDataset(folds_data,
-                                      folds=train_folds,
-                                      transform=train_transfrom,
-                                      pseudo_label=pseudo,
-                                      pseudo_threshold=PSEUDO_THRESHOLD)
+                                            folds=train_folds,
+                                            transform=train_transfrom,
+                                            pseudo_label=pseudo,
+                                            pseudo_threshold=PSEUDO_THRESHOLD)
         train_datasets.append(train_folds_dataset)
         train_dataset = ConcatDataset(train_datasets)
 
@@ -197,12 +197,13 @@ def train_fold(save_dir, train_folds, val_folds, folds_data,
             num_workers=NUM_WORKERS
         )
 
-        callbacks = []
+        callbacks = [
+            EarlyStopping(monitor='val_roc_auc', patience=1)
+        ]
         if local_rank == 0:
             callbacks += [
                 LoggingToFile(save_dir / 'log.txt', append=True),
-                LoggingToCSV(save_dir / 'log.csv', append=True),
-                EarlyStopping(monitor='val_roc_auc', patience=1)
+                LoggingToCSV(save_dir / 'log.csv', append=True)
             ]
 
         num_iterations = (len(train_dataset) // BATCH_SIZE) * num_epochs
