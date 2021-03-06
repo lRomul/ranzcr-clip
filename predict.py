@@ -12,9 +12,11 @@ from src import config
 parser = argparse.ArgumentParser()
 parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='', type=str)
+parser.add_argument('--tta', action='store_true')
 args = parser.parse_args()
 
 BATCH_SIZE = 4
+TTA = args.tta
 DEVICE = 'cuda'
 NUM_WORKERS = 2 if config.kernel_mode else 8
 if args.folds:
@@ -38,7 +40,7 @@ def classification_pred(test_data, experiment):
         print("Model path", model_path)
 
         predictor = Predictor(model_path, BATCH_SIZE,
-                              device=DEVICE, tta=False,
+                              device=DEVICE, tta=TTA,
                               num_workers=NUM_WORKERS)
 
         fold_pred = predictor.predict(test_data)
@@ -91,6 +93,7 @@ if __name__ == "__main__":
     assert experiments
     print("Device", DEVICE)
     print("Batch size", BATCH_SIZE)
+    print("TTA", TTA)
     print("Experiments", experiments)
 
     test_data = get_test_data()
