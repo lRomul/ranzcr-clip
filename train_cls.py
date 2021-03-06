@@ -47,7 +47,7 @@ if args.distributed:
     torch.cuda.set_device(args.local_rank)
     torch.distributed.init_process_group(backend='nccl', init_method='env://')
 
-PSEUDO_EXPERIMENT = ''
+PSEUDO_EXPERIMENT = 'b7v3_001'
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.0
 BATCH_SIZE = 12
@@ -92,7 +92,7 @@ PARAMS = {
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.32,
+        'drop_rate': 0.2,
         'attention': None
     }),
     'loss': 'BCEWithLogitsLoss',
