@@ -88,7 +88,7 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('timm', {
-        'model_name': 'hrnet_w32',
+        'model_name': 'hrnet_w18',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
