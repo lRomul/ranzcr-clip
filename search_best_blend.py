@@ -32,7 +32,7 @@ if __name__ == "__main__":
     experiments = []
     for experiment_dir in config.predictions_dir.iterdir():
         if experiment_dir.is_dir():
-            if ',' not in str(experiment_dir):  # filter blend predictions
+            if ',' not in experiment_dir.name:  # filter blend predictions
                 experiments.append(experiment_dir.name)
 
     combinations = []
