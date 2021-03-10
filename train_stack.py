@@ -24,7 +24,7 @@ STACKING_EXPERIMENT = args.experiment
 EXPERIMENTS = 'kdb3v3_b71_001,kdb4v3_b61_002,kdb4v3_b71_001'
 USE_EMA = True
 USE_AMP = False
-EMA_DECAY = 0.9999
+EMA_DECAY = 0.9997
 RS_PARAMS = {
     "base_size": 256,
     "reduction_scale": 2,
