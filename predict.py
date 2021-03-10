@@ -4,7 +4,11 @@ import pandas as pd
 
 from src.predictor import Predictor
 from src.datasets import get_test_data
-from src.utils import get_best_model_path, remove_than_make_dir
+from src.utils import (
+    get_best_model_path,
+    remove_than_make_dir,
+    load_and_blend_preds
+)
 
 from src import config
 
@@ -63,18 +67,9 @@ def classification_pred(test_data, experiment):
 
 
 def make_submission(experiments):
-    pred_lst = []
-    study_ids = None
-    for experiment in experiments:
-        pred_path = config.predictions_dir / experiment / 'test' / 'preds.npz'
-        pred_npz = np.load(pred_path)
-        preds = pred_npz['preds']
-        if study_ids is not None:
-            assert np.all(study_ids == pred_npz['study_ids'])
-        study_ids = pred_npz['study_ids']
-        pred_lst.append(preds)
-    assert len(pred_lst) == len(experiments)
-    blend_preds = np.mean(pred_lst, axis=0)
+    pred_paths = [config.predictions_dir / exp / 'test' / 'preds.npz'
+                  for exp in experiments]
+    blend_preds, study_ids = load_and_blend_preds(pred_paths)
 
     subm_df = pd.DataFrame(index=study_ids, columns=config.classes)
     subm_df.index.name = 'StudyInstanceUID'

@@ -47,7 +47,7 @@ def remove_than_make_dir(dir_path):
     dir_path.mkdir(parents=True, exist_ok=True)
 
 
-def load_and_blend_preds(pred_paths):
+def load_preds(pred_paths):
     pred_lst = []
     study_ids = None
     for pred_path in pred_paths:
@@ -57,9 +57,19 @@ def load_and_blend_preds(pred_paths):
             assert np.all(study_ids == pred_npz['study_ids'])
         study_ids = pred_npz['study_ids']
         pred_lst.append(preds)
+    return pred_lst, study_ids
 
+
+def load_and_blend_preds(pred_paths):
+    pred_lst, study_ids = load_preds(pred_paths)
     blend_preds = np.mean(pred_lst, axis=0)
     return blend_preds, study_ids
+
+
+def load_and_concat_preds(pred_paths):
+    pred_lst, study_ids = load_preds(pred_paths)
+    concat_preds = np.concatenate(pred_lst, axis=1)
+    return concat_preds, study_ids
 
 
 def save_and_score_val_subm(pred, study_ids, dir_path):
