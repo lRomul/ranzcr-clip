@@ -21,6 +21,7 @@ parser.add_argument('--folds', default='all', type=str)
 args = parser.parse_args()
 
 EXPERIMENTS = 'kdb3v3_b71_001,kdb4v3_b61_002,kdb4v3_b71_001'
+EXPERIMENTS = sorted(EXPERIMENTS.split(','))
 USE_AMP = False
 RS_PARAMS = {
     "base_size": 512,
@@ -39,7 +40,7 @@ NUM_WORKERS = 2
 SAVE_DIR = config.experiments_dir / args.experiment
 PARAMS = {
     'nn_module': ('FCNet', {
-        'in_channels': len(EXPERIMENTS.split(',')) * config.n_classes,
+        'in_channels': len(EXPERIMENTS) * config.n_classes,
         'num_classes': config.n_classes,
         'base_size': RS_PARAMS['base_size'],
         'reduction_scale': RS_PARAMS['reduction_scale'],
@@ -48,7 +49,7 @@ PARAMS = {
     'loss': 'BCEWithLogitsLoss',
     'optimizer': ('AdamW', {'lr': RS_PARAMS['lr']}),
     'device': 'cuda',
-    'experiments': EXPERIMENTS,
+    'experiments': ','.join(EXPERIMENTS),
     'amp': USE_AMP,
     'clip_grad': 0.0,
 }
@@ -89,10 +90,8 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
 
 
 if __name__ == "__main__":
-    experiments = sorted(EXPERIMENTS.split(','))
-    assert experiments
     print("Batch size", BATCH_SIZE)
-    print("Experiments", experiments)
+    print("Experiments", EXPERIMENTS)
 
     if not SAVE_DIR.exists():
         SAVE_DIR.mkdir(parents=True, exist_ok=True)
@@ -111,7 +110,7 @@ if __name__ == "__main__":
     else:
         folds = [int(fold) for fold in args.folds.split(',')]
 
-    folds_data = get_stacking_folds_data(experiments)
+    folds_data = get_stacking_folds_data(EXPERIMENTS)
 
     for fold in folds:
         val_folds = [fold]
