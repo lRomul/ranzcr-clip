@@ -50,7 +50,7 @@ if args.distributed:
 PSEUDO_EXPERIMENT = 'b6v3_001'
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.0
-BATCH_SIZE = 4
+BATCH_SIZE = 8
 ITER_SIZE = 1
 IMAGE_SIZE = 1024
 NUM_WORKERS = 6
@@ -88,11 +88,11 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('TimmModel', {
-        'model_name': 'tf_efficientnet_b4_ns',
+        'model_name': 'tf_efficientnet_b2_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.4,
+        'drop_rate': 0.3,
         'drop_path_rate': 0.2,
         'attention': None
     }),
