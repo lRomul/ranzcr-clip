@@ -30,7 +30,10 @@ def get_best_model_path(dir_path, return_score=False):
             model_scores.append((model_path, score))
 
     if not model_scores:
-        return None
+        if return_score:
+            return None, -np.inf
+        else:
+            return None
 
     model_score = sorted(model_scores, key=lambda x: x[1])
     best_model_path = model_score[-1][0]
