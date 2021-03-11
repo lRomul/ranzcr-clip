@@ -2,6 +2,8 @@ cd "$(dirname "${BASH_SOURCE[0]}")" || exit
 
 EXPS=${1}
 IFS=',' read -ra EXPS_ARR <<< "$EXPS"
+STACK_EXPS=${1}
+IFS=',' read -ra STACK_EXPS_ARR <<< "$STACK_EXPS"
 BRANCH=${2:-master}
 
 echo "EXPS=$EXPS, BRANCH=$BRANCH"
@@ -24,4 +26,11 @@ for EXP in "${EXPS_ARR[@]}"
 do
     echo "$EXP"
     cp -r "../experiments/$EXP" "./ranzcr-clip/data/experiments/$EXP"
+done
+
+sed "s/experiment_stack_name/$STACK_EXPS/g" ./ranzcr-clip/kernel.py > ./kernel.py
+for STACK_EXP in "${STACK_EXPS_ARR[@]}"
+do
+    echo "$STACK_EXP"
+    cp -r "../experiments/$STACK_EXP" "./ranzcr-clip/data/experiments/$STACK_EXP"
 done
