@@ -32,17 +32,17 @@ else:
     FOLDS = config.folds
 
 
-def classification_pred(test_data, experiment):
-    test_prediction_dir = config.predictions_dir / experiment / 'test'
+def classification_pred(test_data, cls_experiment):
+    test_prediction_dir = config.predictions_dir / cls_experiment / 'test'
     remove_than_make_dir(test_prediction_dir)
-    print(f"Start predict: {experiment}")
+    print(f"Start predict: {cls_experiment}")
     study_ids = [s['StudyInstanceUID'] for s in test_data]
 
     pred_lst = []
     for fold in FOLDS:
         print("Predict fold", fold)
         model_path = get_best_model_path(
-            config.experiments_dir / experiment / f'fold_{fold}'
+            config.experiments_dir / cls_experiment / f'fold_{fold}'
         )
         print("Model path", model_path)
 
@@ -69,17 +69,17 @@ def classification_pred(test_data, experiment):
     )
 
 
-def stacking_pred(stack_test_data, stack_experiment):
-    test_prediction_dir = config.predictions_dir / stack_experiment / 'test'
+def stacking_pred(stack_test_data, stacking_experiment):
+    test_prediction_dir = config.predictions_dir / stacking_experiment / 'test'
     remove_than_make_dir(test_prediction_dir)
-    print(f"Start predict: {stack_experiment}")
+    print(f"Start stack predict: {stacking_experiment}")
     study_ids = [s['StudyInstanceUID'] for s in stack_test_data]
 
     pred_lst = []
     for fold in FOLDS:
         print("Predict fold", fold)
         model_path = get_best_model_path(
-            config.experiments_dir / stack_experiment / f'fold_{fold}'
+            config.experiments_dir / stacking_experiment / f'fold_{fold}'
         )
         print("Stack model path", model_path)
         predictor = StackPredictor(model_path, BATCH_SIZE, device=DEVICE)
@@ -129,11 +129,11 @@ if __name__ == "__main__":
     print("Batch size", BATCH_SIZE)
     print("TTA", TTA)
     print("Experiments", experiments)
-    print("Stack experiments", experiments)
+    print("Stack experiments", stack_experiments)
 
     test_data = get_test_data()
-    for stack_experiment in experiments:
-        classification_pred(test_data, stack_experiment)
+    for experiment in experiments:
+        classification_pred(test_data, experiment)
     if stack_experiments:
         stack_test_data = get_stacking_test_data(stack_experiments)
         for stack_experiment in stack_experiments:
