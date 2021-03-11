@@ -8,10 +8,14 @@ from argus.callbacks import (
     CosineAnnealingLR
 )
 
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
 
 from src.ema import EmaMonitorCheckpoint, ModelEma
-from src.stacking.datasets import StackingDataset, get_stacking_folds_data
+from src.stacking.datasets import (
+    StackingDataset,
+    get_stacking_folds_data,
+    get_stacking_test_data
+)
 from src.stacking.argus_models import StackingModel
 from src import config
 
@@ -38,6 +42,16 @@ BATCH_SIZE = RS_PARAMS['batch_size']
 NUM_WORKERS = 2
 
 SAVE_DIR = config.experiments_dir / args.experiment
+
+PSEUDO_EXPERIMENT = 'b7v3_001'
+PSEUDO_THRESHOLD = None
+if PSEUDO_EXPERIMENT:
+    PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'val' / 'preds.npz'
+    TEST_PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'test'
+else:
+    PSEUDO = None
+    TEST_PSEUDO = None
+
 PARAMS = {
     'nn_module': ('FCNet', {
         'in_channels': len(EXPERIMENTS) * config.n_classes,
@@ -56,7 +70,22 @@ PARAMS = {
 
 
 def train_fold(save_dir, train_folds, val_folds, folds_data):
-    train_dataset = StackingDataset(folds_data, train_folds)
+    train_datasets = []
+    if PSEUDO:
+        test_data = get_stacking_test_data(
+            EXPERIMENTS,
+            pseudo_label_path=TEST_PSEUDO / f'fold_{val_folds[0]}' / 'preds.npz'
+        )
+        test_dataset = StackingDataset(test_data,
+                                       pseudo_label=PSEUDO,
+                                       pseudo_threshold=PSEUDO_THRESHOLD)
+        train_datasets.append(test_dataset)
+    train_folds_dataset = StackingDataset(folds_data,
+                                          folds=train_folds,
+                                          pseudo_label=PSEUDO,
+                                          pseudo_threshold=PSEUDO_THRESHOLD)
+    train_datasets.append(train_folds_dataset)
+    train_dataset = ConcatDataset(train_datasets)
     val_dataset = StackingDataset(folds_data, val_folds)
 
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
@@ -110,7 +139,7 @@ if __name__ == "__main__":
     else:
         folds = [int(fold) for fold in args.folds.split(',')]
 
-    folds_data = get_stacking_folds_data(EXPERIMENTS)
+    folds_data = get_stacking_folds_data(EXPERIMENTS, pseudo_label_path=PSEUDO)
 
     for fold in folds:
         val_folds = [fold]

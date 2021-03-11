@@ -13,10 +13,14 @@ from argus.callbacks import (
 )
 
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
 
 from src.ema import EmaMonitorCheckpoint, ModelEma
-from src.stacking.datasets import StackingDataset, get_stacking_folds_data
+from src.stacking.datasets import (
+    StackingDataset,
+    get_stacking_folds_data,
+    get_stacking_test_data
+)
 from src.stacking.argus_models import StackingModel
 from src.utils import get_best_model_path
 from src import config
@@ -27,8 +31,17 @@ parser.add_argument('--folds', default='all', type=str)
 args = parser.parse_args()
 
 EXPERIMENTS = 'kdb3v3_b71_001,kdb4v3_b61_002,kdb4v3_b71_001'
+EXPERIMENTS = sorted(EXPERIMENTS.split(','))
 NUM_WORKERS = 2
 SAVE_DIR = config.experiments_dir / args.experiment
+PSEUDO_EXPERIMENT = 'b7v3_001'
+PSEUDO_THRESHOLD = None
+if PSEUDO_EXPERIMENT:
+    PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'val' / 'preds.npz'
+    TEST_PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'test'
+else:
+    PSEUDO = None
+    TEST_PSEUDO = None
 
 
 def train_folds(save_dir, folds_data):
@@ -51,7 +64,7 @@ def train_folds(save_dir, folds_data):
 
     params = {
         'nn_module': ('FCNet', {
-            'in_channels': len(EXPERIMENTS.split(',')) * config.n_classes,
+            'in_channels': len(EXPERIMENTS) * config.n_classes,
             'num_classes': config.n_classes,
             'base_size': random_params['base_size'],
             'reduction_scale': random_params['reduction_scale'],
@@ -60,7 +73,7 @@ def train_folds(save_dir, folds_data):
         'loss': 'BCEWithLogitsLoss',
         'optimizer': ('AdamW', {'lr': random_params['lr']}),
         'device': 'cuda',
-        'experiments': EXPERIMENTS,
+        'experiments': ','.join(EXPERIMENTS),
         'amp': False,
         'clip_grad': 0.0,
     }
@@ -72,7 +85,22 @@ def train_folds(save_dir, folds_data):
         print(f"Val folds: {val_folds}, Train folds: {train_folds}")
         print(f"Fold save dir {save_fold_dir}")
 
-        train_dataset = StackingDataset(folds_data, train_folds)
+        train_datasets = []
+        if PSEUDO:
+            test_data = get_stacking_test_data(
+                EXPERIMENTS,
+                pseudo_label_path=TEST_PSEUDO / f'fold_{val_folds[0]}' / 'preds.npz'
+            )
+            test_dataset = StackingDataset(test_data,
+                                           pseudo_label=PSEUDO,
+                                           pseudo_threshold=PSEUDO_THRESHOLD)
+            train_datasets.append(test_dataset)
+        train_folds_dataset = StackingDataset(folds_data,
+                                              folds=train_folds,
+                                              pseudo_label=PSEUDO,
+                                              pseudo_threshold=PSEUDO_THRESHOLD)
+        train_datasets.append(train_folds_dataset)
+        train_dataset = ConcatDataset(train_datasets)
         val_dataset = StackingDataset(folds_data, val_folds)
 
         train_loader = DataLoader(train_dataset, batch_size=random_params['batch_size'],
@@ -112,13 +140,11 @@ def train_folds(save_dir, folds_data):
 
 
 if __name__ == "__main__":
-    experiments = sorted(EXPERIMENTS.split(','))
-
     SAVE_DIR.mkdir(parents=True, exist_ok=True)
     with open(SAVE_DIR / 'source.py', 'w') as outfile:
         outfile.write(open(__file__).read())
 
-    folds_data = get_stacking_folds_data(experiments)
+    folds_data = get_stacking_folds_data(EXPERIMENTS, pseudo_label_path=PSEUDO)
 
     while True:
         num = random.randint(0, 2 ** 32 - 1)
