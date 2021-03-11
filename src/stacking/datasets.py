@@ -57,11 +57,9 @@ class StackingDataset(Dataset):
     def __init__(self,
                  data,
                  folds=None,
-                 size=None,
                  return_target=True):
         super().__init__()
         self.folds = folds
-        self.size = size
         self.return_target = return_target
 
         if folds is None:
@@ -70,10 +68,7 @@ class StackingDataset(Dataset):
             self.data = [s for s in data if s['fold'] in folds]
 
     def __len__(self):
-        if self.size is None:
-            return len(self.data)
-        else:
-            return self.size
+        return len(self.data)
 
     def get_sample(self, idx):
         sample = self.data[idx]
@@ -91,6 +86,4 @@ class StackingDataset(Dataset):
         return preds, target
 
     def __getitem__(self, idx):
-        set_random_seed(idx)
-        idx = np.random.randint(len(self.data))
         return self.get_sample(idx)
