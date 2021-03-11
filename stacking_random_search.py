@@ -32,9 +32,9 @@ args = parser.parse_args()
 
 EXPERIMENTS = 'kdb3v3_b71_001,kdb4v3_b61_002,kdb4v3_b71_001'
 EXPERIMENTS = sorted(EXPERIMENTS.split(','))
+PSEUDO_EXPERIMENT = 'b7v3_001'
 NUM_WORKERS = 2
 SAVE_DIR = config.experiments_dir / args.experiment
-PSEUDO_EXPERIMENT = 'b7v3_001'
 PSEUDO_THRESHOLD = None
 if PSEUDO_EXPERIMENT:
     PSEUDO = config.predictions_dir / PSEUDO_EXPERIMENT / 'val' / 'preds.npz'
