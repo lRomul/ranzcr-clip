@@ -41,6 +41,10 @@ def classification_pred(test_data, experiment):
         model_path = get_best_model_path(
             config.experiments_dir / experiment / f'fold_{fold}'
         )
+        if model_path is None:
+            print(f"Skip fold {fold} of experiment {experiment}")
+            continue
+
         print("Model path", model_path)
 
         predictor = Predictor(model_path, BATCH_SIZE,
