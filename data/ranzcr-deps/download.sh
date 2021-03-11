@@ -28,7 +28,7 @@ do
     cp -r "../experiments/$EXP" "./ranzcr-clip/data/experiments/$EXP"
 done
 
-sed "s/experiment_stack_name/$STACK_EXPS/g" ./ranzcr-clip/kernel.py > ./kernel.py
+sed -i "s/experiment_stack_name/$STACK_EXPS/g" ./kernel.py
 for STACK_EXP in "${STACK_EXPS_ARR[@]}"
 do
     echo "$STACK_EXP"
