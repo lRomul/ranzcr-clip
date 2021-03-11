@@ -137,7 +137,7 @@ if __name__ == "__main__":
     for experiment in experiments:
         classification_pred(test_data, experiment)
     if stack_experiments:
-        stack_test_data = get_stacking_test_data(stack_experiments)
+        stack_test_data = get_stacking_test_data(experiments)
         for stack_experiment in stack_experiments:
             stacking_pred(stack_test_data, stack_experiment)
     make_submission(experiments + stack_experiments)

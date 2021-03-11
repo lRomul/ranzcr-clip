@@ -93,5 +93,4 @@ class StackingDataset(Dataset):
     def __getitem__(self, idx):
         set_random_seed(idx)
         idx = np.random.randint(len(self.data))
-        preds, target = self.get_sample(idx)
-        return preds, target
+        return self.get_sample(idx)

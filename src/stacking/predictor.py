@@ -1,4 +1,4 @@
-import torch
+import numpy as np
 from torch.utils.data import DataLoader
 
 from argus import load_model
@@ -27,5 +27,5 @@ class StackPredictor:
             pred_batch = self.model.predict(batch)
             preds_lst.append(pred_batch.cpu().numpy())
 
-        pred = torch.cat(preds_lst, dim=0)
+        pred = np.concatenate(preds_lst, axis=0)
         return pred
