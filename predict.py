@@ -107,6 +107,7 @@ def stacking_pred(stack_test_data, stacking_experiment):
 def make_submission(experiments):
     pred_paths = [config.predictions_dir / exp / 'test' / 'preds.npz'
                   for exp in experiments]
+    print("Make submission from predictions", pred_paths)
     blend_preds, study_ids = load_and_blend_preds(pred_paths)
 
     subm_df = pd.DataFrame(index=study_ids, columns=config.classes)
@@ -130,6 +131,7 @@ if __name__ == "__main__":
     print("TTA", TTA)
     print("Experiments", experiments)
     print("Stack experiments", stack_experiments)
+    print("Folds", FOLDS)
 
     test_data = get_test_data()
     for experiment in experiments:
