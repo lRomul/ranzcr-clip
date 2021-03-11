@@ -20,6 +20,7 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--stack_experiment', default='', type=str)
 parser.add_argument('--folds', default='', type=str)
 parser.add_argument('--tta', action='store_true')
+parser.add_argument('--stack_only', action='store_true')
 args = parser.parse_args()
 
 BATCH_SIZE = 4
@@ -132,10 +133,12 @@ if __name__ == "__main__":
     print("Experiments", experiments)
     print("Stack experiments", stack_experiments)
     print("Folds", FOLDS)
+    print("Only stacking experiments", args.stack_only)
 
     test_data = get_test_data()
-    for experiment in experiments:
-        classification_pred(test_data, experiment)
+    if not args.stack_only:
+        for experiment in experiments:
+            classification_pred(test_data, experiment)
     if stack_experiments:
         stack_test_data = get_stacking_test_data(experiments)
         for stack_experiment in stack_experiments:
