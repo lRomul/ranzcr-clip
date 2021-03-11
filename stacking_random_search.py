@@ -18,6 +18,7 @@ from torch.utils.data import DataLoader
 from src.ema import EmaMonitorCheckpoint, ModelEma
 from src.stacking.datasets import StackingDataset, get_stacking_folds_data
 from src.stacking.argus_models import StackingModel
+from src.utils import get_best_model_path
 from src import config
 
 parser = argparse.ArgumentParser()
@@ -36,9 +37,9 @@ def train_folds(save_dir, folds_data):
         'reduction_scale': int(np.random.choice([2, 4, 8, 16])),
         'p_dropout': float(np.random.uniform(0.0, 0.5)),
         'lr': float(np.random.uniform(0.0001, 0.00001)),
-        'epochs': int(np.random.randint(10, 80)),
+        'epochs': int(np.random.randint(10, 120)),
         'eta_min_scale': float(np.random.uniform(0.1, 0.01)),
-        'batch_size': int(np.random.choice([32, 64, 128])),
+        'batch_size': int(np.random.choice([16, 32, 64, 128])),
         'use_ema': bool(np.random.choice([False, True])),
         'ema_decay': float(np.random.uniform(0.9995, 0.9999))
     }
@@ -93,7 +94,7 @@ def train_folds(save_dir, folds_data):
             checkpoint(save_fold_dir, monitor='val_roc_auc', max_saves=1),
             CosineAnnealingLR(T_max=random_params['epochs'],
                               eta_min=random_params['lr'] * random_params['eta_min_scale']),
-            EarlyStopping(monitor='val_roc_auc', patience=30),
+            EarlyStopping(monitor='val_roc_auc', patience=20),
             LoggingToFile(save_fold_dir / 'log.txt'),
         ]
 
@@ -102,6 +103,12 @@ def train_folds(save_dir, folds_data):
                   num_epochs=random_params['epochs'],
                   callbacks=callbacks,
                   metrics=['roc_auc'])
+
+        best_path, score = get_best_model_path(save_fold_dir,
+                                               return_score=True)
+        if score < 0.968:
+            print(f"Break search via low score {score}, {best_path}")
+            return
 
 
 if __name__ == "__main__":
