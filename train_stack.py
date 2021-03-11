@@ -20,24 +20,23 @@ parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='all', type=str)
 args = parser.parse_args()
 
-STACKING_EXPERIMENT = args.experiment
 EXPERIMENTS = 'kdb3v3_b71_001,kdb4v3_b61_002,kdb4v3_b71_001'
-USE_EMA = True
 USE_AMP = False
-EMA_DECAY = 0.9997
 RS_PARAMS = {
-    "base_size": 256,
-    "reduction_scale": 2,
-    "p_dropout": 0.025,
-    "lr": 4e-04,
-    "epochs": 12,
-    "eta_min_scale": 0.01,
-    "batch_size": 32
+    "base_size": 512,
+    "reduction_scale": 4,
+    "p_dropout": 0.2132065192973704,
+    "lr": 7.929567216714842e-05,
+    "epochs": 70,
+    "eta_min_scale": 0.09535456983407244,
+    "batch_size": 32,
+    "use_ema": False,
+    "ema_decay": 0.9996726803610275
 }
 BATCH_SIZE = RS_PARAMS['batch_size']
 NUM_WORKERS = 2
 
-SAVE_DIR = config.experiments_dir / STACKING_EXPERIMENT
+SAVE_DIR = config.experiments_dir / args.experiment
 PARAMS = {
     'nn_module': ('FCNet', {
         'in_channels': len(EXPERIMENTS.split(',')) * config.n_classes,
@@ -67,9 +66,9 @@ def train_fold(save_dir, train_folds, val_folds, folds_data):
 
     model = StackingModel(PARAMS)
 
-    if USE_EMA:
-        print(f"EMA decay: {EMA_DECAY}")
-        model.model_ema = ModelEma(model.nn_module, decay=EMA_DECAY)
+    if RS_PARAMS['use_ema']:
+        print(f"EMA decay: {RS_PARAMS['ema_decay']}")
+        model.model_ema = ModelEma(model.nn_module, decay=RS_PARAMS['ema_decay'])
         checkpoint = EmaMonitorCheckpoint
     else:
         checkpoint = MonitorCheckpoint
