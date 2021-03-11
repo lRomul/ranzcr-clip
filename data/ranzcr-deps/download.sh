@@ -2,9 +2,9 @@ cd "$(dirname "${BASH_SOURCE[0]}")" || exit
 
 EXPS=${1}
 IFS=',' read -ra EXPS_ARR <<< "$EXPS"
-STACK_EXPS=${1}
+STACK_EXPS=${2}
 IFS=',' read -ra STACK_EXPS_ARR <<< "$STACK_EXPS"
-BRANCH=${2:-master}
+BRANCH=${3:-master}
 
 echo "EXPS=$EXPS, BRANCH=$BRANCH"
 
