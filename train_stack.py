@@ -30,14 +30,14 @@ PSEUDO_EXPERIMENT = 'b7v3_001'
 USE_AMP = False
 RS_PARAMS = {
     "base_size": 512,
-    "reduction_scale": 4,
-    "p_dropout": 0.2132065192973704,
-    "lr": 7.929567216714842e-05,
-    "epochs": 70,
-    "eta_min_scale": 0.09535456983407244,
-    "batch_size": 32,
+    "reduction_scale": 2,
+    "p_dropout": 0.09099263263987534,
+    "lr": 4.949673313071479e-05,
+    "epochs": 116,
+    "eta_min_scale": 0.08542355505460729,
+    "batch_size": 16,
     "use_ema": False,
-    "ema_decay": 0.9996726803610275
+    "ema_decay": 0.9998234462212626
 }
 BATCH_SIZE = RS_PARAMS['batch_size']
 NUM_WORKERS = 2
