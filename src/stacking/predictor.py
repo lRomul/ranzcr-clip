@@ -1,7 +1,9 @@
 import torch
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader
 
 from argus import load_model
+
+from src.stacking.datasets import StackingDataset
 
 
 class StackPredictor:
@@ -11,9 +13,14 @@ class StackPredictor:
         self.model = load_model(model_path, device=device)
         self.batch_size = batch_size
 
-    def predict(self, preds):
-        dataset = TensorDataset(preds.copy())
-        loader = DataLoader(dataset, batch_size=self.batch_size)
+    def predict(self, data):
+        dataset = StackingDataset(data,
+                                  return_target=False,
+                                  folds=None)
+        loader = DataLoader(dataset,
+                            batch_size=self.batch_size,
+                            shuffle=False,
+                            num_workers=2)
 
         preds_lst = []
         for batch in loader:

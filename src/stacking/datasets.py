@@ -1,6 +1,8 @@
+import glob
 import torch
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 from torch.utils.data import Dataset
 
@@ -32,16 +34,35 @@ def get_stacking_folds_data(experiments):
     return folds_data
 
 
+def get_stacking_test_data(experiments):
+    test_data = []
+
+    pred_paths = [config.predictions_dir / exp / 'test' / 'preds.npz'
+                  for exp in experiments]
+    concat_preds, study_ids = load_and_concat_preds(pred_paths)
+    study_id2concat_pred = {s: p for s, p in zip(study_ids, concat_preds)}
+
+    for image_path in sorted(glob.glob(str(config.test_dir / "*.jpg"))):
+        study_id = Path(image_path).stem
+        sample = {
+            'image_path': image_path,
+            'StudyInstanceUID': study_id,
+            'concat_preds': study_id2concat_pred[study_id]
+        }
+        test_data.append(sample)
+    return test_data
+
+
 class StackingDataset(Dataset):
     def __init__(self,
                  data,
                  folds=None,
                  size=None,
-                 target=True):
+                 return_target=True):
         super().__init__()
         self.folds = folds
         self.size = size
-        self.target = target
+        self.return_target = return_target
 
         if folds is None:
             self.data = data
@@ -57,20 +78,20 @@ class StackingDataset(Dataset):
     def get_sample(self, idx):
         sample = self.data[idx]
 
-        probs = sample['concat_preds'].copy()
-        probs = torch.from_numpy(probs)
+        preds = sample['concat_preds'].copy()
+        preds = torch.from_numpy(preds)
 
-        if not self.target:
-            return probs
+        if not self.return_target:
+            return preds
 
         target = torch.zeros(config.n_classes, dtype=torch.float32)
         for cls in config.classes:
             target[config.class2target[cls]] = sample[cls]
 
-        return probs, target
+        return preds, target
 
     def __getitem__(self, idx):
         set_random_seed(idx)
         idx = np.random.randint(len(self.data))
-        probs, target = self.get_sample(idx)
-        return probs, target
+        preds, target = self.get_sample(idx)
+        return preds, target
