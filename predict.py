@@ -90,7 +90,7 @@ def make_submission(experiments, multipliers=None):
 
 
 if __name__ == "__main__":
-    experiments = sorted(args.experiment.split(','))
+    experiments = args.experiment.split(',')
     if args.multipliers:
         multipliers = [int(mult) for mult in args.multipliers.split(',')]
     else:
