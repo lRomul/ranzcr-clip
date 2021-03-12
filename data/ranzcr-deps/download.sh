@@ -2,7 +2,8 @@ cd "$(dirname "${BASH_SOURCE[0]}")" || exit
 
 EXPS=${1}
 IFS=',' read -ra EXPS_ARR <<< "$EXPS"
-BRANCH=${2:-master}
+MULTS=${2:-}
+BRANCH=${3:-master}
 
 echo "EXPS=$EXPS, BRANCH=$BRANCH"
 
@@ -20,6 +21,7 @@ do
 done
 
 sed "s/experiment_name/$EXPS/g" ./ranzcr-clip/kernel.py > ./kernel.py
+sed -i "s/experiment_multipliers/$MULTS/g" ./kernel.py
 for EXP in "${EXPS_ARR[@]}"
 do
     echo "$EXP"

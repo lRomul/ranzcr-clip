@@ -16,6 +16,7 @@ from src import config
 parser = argparse.ArgumentParser()
 parser.add_argument('--experiment', required=True, type=str)
 parser.add_argument('--folds', default='', type=str)
+parser.add_argument('--multipliers', default='', type=str)
 parser.add_argument('--tta', action='store_true')
 args = parser.parse_args()
 
@@ -70,10 +71,11 @@ def classification_pred(test_data, experiment):
     )
 
 
-def make_submission(experiments):
+def make_submission(experiments, multipliers=None):
     pred_paths = [config.predictions_dir / e / 'test' / 'preds.npz'
                   for e in experiments]
-    blend_preds, study_ids = load_and_blend_preds(pred_paths)
+    blend_preds, study_ids = load_and_blend_preds(pred_paths,
+                                                  multipliers=multipliers)
 
     subm_df = pd.DataFrame(index=study_ids, columns=config.classes)
     subm_df.index.name = 'StudyInstanceUID'
@@ -89,13 +91,18 @@ def make_submission(experiments):
 
 if __name__ == "__main__":
     experiments = sorted(args.experiment.split(','))
-    assert experiments
+    if args.multipliers:
+        multipliers = [int(mult) for mult in args.multipliers.split(',')]
+    else:
+        multipliers = [1] * len(experiments)
+    assert len(experiments) == len(multipliers)
     print("Device", DEVICE)
     print("Batch size", BATCH_SIZE)
     print("TTA", TTA)
     print("Experiments", experiments)
+    print("Multipliers", multipliers)
 
     test_data = get_test_data()
     for experiment in experiments:
         classification_pred(test_data, experiment)
-    make_submission(experiments)
+    make_submission(experiments, multipliers=multipliers)

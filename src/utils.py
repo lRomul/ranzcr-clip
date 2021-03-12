@@ -57,6 +57,7 @@ def load_and_blend_preds(pred_paths, multipliers=None):
     study_ids = None
     for pred_path, multiplier in zip(pred_paths, multipliers):
         pred_npz = np.load(pred_path)
+        print(f'{pred_path} * {multiplier}')
         preds = pred_npz['preds'] * multiplier
         if study_ids is not None:
             assert np.all(study_ids == pred_npz['study_ids'])
