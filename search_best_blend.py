@@ -13,11 +13,12 @@ from src.utils import load_and_blend_preds
 parser = argparse.ArgumentParser()
 parser.add_argument('--max', default=7, type=int)
 parser.add_argument('--workers', default=32, type=int)
+parser.add_argument('--folder', default='', type=str)
 args = parser.parse_args()
 
 
-def experiments_blend_score(experiments):
-    pred_paths = [config.predictions_dir / e / 'val' / 'preds.npz'
+def experiments_blend_score(experiments, folder=args.folder):
+    pred_paths = [config.predictions_dir / folder / e / 'val' / 'preds.npz'
                   for e in experiments]
     blend_preds, study_ids = load_and_blend_preds(pred_paths)
 
@@ -30,7 +31,7 @@ def experiments_blend_score(experiments):
 
 if __name__ == "__main__":
     experiments = []
-    for experiment_dir in config.predictions_dir.iterdir():
+    for experiment_dir in (config.predictions_dir / args.folder).iterdir():
         if experiment_dir.is_dir():
             if ',' not in experiment_dir.name:  # filter blend predictions
                 experiments.append(experiment_dir.name)
