@@ -17,10 +17,13 @@ parser.add_argument('--folder', default='', type=str)
 args = parser.parse_args()
 
 
-def experiments_blend_score(experiments, folder=args.folder):
+def experiments_blend_score(experiments,
+                            multipliers=None,
+                            folder=args.folder):
     pred_paths = [config.predictions_dir / folder / e / 'val' / 'preds.npz'
                   for e in experiments]
-    blend_preds, study_ids = load_and_blend_preds(pred_paths)
+    blend_preds, study_ids = load_and_blend_preds(pred_paths,
+                                                  multipliers=multipliers)
 
     train_df = pd.read_csv(config.train_folds_path, index_col=0)
     train_df = train_df.loc[study_ids].copy()

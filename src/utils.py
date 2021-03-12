@@ -50,18 +50,20 @@ def remove_than_make_dir(dir_path):
     dir_path.mkdir(parents=True, exist_ok=True)
 
 
-def load_and_blend_preds(pred_paths):
+def load_and_blend_preds(pred_paths, multipliers=None):
+    if multipliers is None:
+        multipliers = [1] * len(pred_paths)
     pred_lst = []
     study_ids = None
-    for pred_path in pred_paths:
+    for pred_path, multiplier in zip(pred_paths, multipliers):
         pred_npz = np.load(pred_path)
-        preds = pred_npz['preds']
+        preds = pred_npz['preds'] * multiplier
         if study_ids is not None:
             assert np.all(study_ids == pred_npz['study_ids'])
         study_ids = pred_npz['study_ids']
         pred_lst.append(preds)
 
-    blend_preds = np.mean(pred_lst, axis=0)
+    blend_preds = np.sum(pred_lst, axis=0) / np.sum(multipliers)
     return blend_preds, study_ids
 
 
