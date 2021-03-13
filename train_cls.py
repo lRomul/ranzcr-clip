@@ -60,7 +60,7 @@ BASE_LR = 5e-4
 MIN_BASE_LR = 5e-6
 USE_AMP = True
 USE_EMA = True
-EMA_DECAY = 0.9998
+EMA_DECAY = 0.9997
 SAVE_DIR = config.experiments_dir / args.experiment
 
 if args.distributed:
@@ -88,11 +88,11 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('TimmModel', {
-        'model_name': 'tf_efficientnet_b4_ns',
+        'model_name': 'tf_efficientnet_b6_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.6,
+        'drop_rate': 0.5,
         'drop_path_rate': 0.2,
         'attention': None
     }),
@@ -103,7 +103,7 @@ PARAMS = {
     'device': 'cuda',
     'amp': USE_AMP,
     'iter_size': ITER_SIZE,
-    'clip_grad': 0.01,
+    'clip_grad': 0.0,
     'image_size': IMAGE_SIZE,
     'draw_annotations': False
 }
