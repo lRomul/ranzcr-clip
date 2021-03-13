@@ -47,11 +47,11 @@ if args.distributed:
     torch.cuda.set_device(args.local_rank)
     torch.distributed.init_process_group(backend='nccl', init_method='env://')
 
-PSEUDO_EXPERIMENT = 'b7v3_001'
+PSEUDO_EXPERIMENT = 'b6v3_001'
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.0
-BATCH_SIZE = 8
-ITER_SIZE = 2
+BATCH_SIZE = 16
+ITER_SIZE = 4
 IMAGE_SIZE = 1024
 NUM_WORKERS = 8
 NUM_EPOCHS = [2, 16, 3]
@@ -88,11 +88,11 @@ def get_lr(base_lr, batch_size):
 
 PARAMS = {
     'nn_module': ('TimmModel', {
-        'model_name': 'tf_efficientnet_b6_ns',
+        'model_name': 'tf_efficientnet_b5_ns',
         'pretrained': True,
         'num_classes': config.n_classes,
         'in_chans': N_CHANNELS,
-        'drop_rate': 0.5,
+        'drop_rate': 0.4,
         'drop_path_rate': 0.2,
         'attention': None
     }),
