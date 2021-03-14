@@ -47,7 +47,7 @@ if args.distributed:
     torch.cuda.set_device(args.local_rank)
     torch.distributed.init_process_group(backend='nccl', init_method='env://')
 
-PSEUDO_EXPERIMENT = 'b6v3_001'
+PSEUDO_EXPERIMENT = 'b6v3_001,b7v3_001'
 PSEUDO_THRESHOLD = None
 PSEUDO_XRAYS_PROB = 0.0
 BATCH_SIZE = 16
