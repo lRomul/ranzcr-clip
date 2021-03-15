@@ -4,6 +4,7 @@ import shutil
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from scipy.stats import rankdata
 from sklearn.metrics import roc_auc_score
 
 import matplotlib.pyplot as plt
@@ -64,6 +65,7 @@ def load_and_blend_preds(pred_paths, multipliers=None):
         study_ids = pred_npz['study_ids']
         pred_lst.append(preds)
 
+    pred_lst = [rankdata(pred, method='average', axis=0) for pred in pred_lst]
     blend_preds = np.sum(pred_lst, axis=0) / np.sum(multipliers)
     return blend_preds, study_ids
 
