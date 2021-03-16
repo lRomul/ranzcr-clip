@@ -66,7 +66,10 @@ def load_and_blend_preds(pred_paths, multipliers=None):
         pred_lst.append(preds)
 
     print("Rank blending")
-    pred_lst = [rankdata(pred, method='average', axis=0) for pred in pred_lst]
+    for pred in pred_lst:
+        for i in range(pred.shape[1]):
+            pred[:, i] = rankdata(pred[:, i], method='average')
+
     blend_preds = np.sum(pred_lst, axis=0) / np.sum(multipliers)
     return blend_preds, study_ids
 
