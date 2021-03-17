@@ -18,7 +18,7 @@ The progress of the solution during the competition can be seen in the [laborato
 It describes all the single models and ensembles and shows CV, Public/Private LB scores.
 
 Experiments:
-![experiments](https://user-images.githubusercontent.com/11138870/111448916-f3dcc580-871f-11eb-8da6-066064308c0e.png)
+![experiments](https://user-images.githubusercontent.com/11138870/111452823-f3462e00-8723-11eb-8df1-cb2fc6b17806.png)
 Ensembles:
 ![ensembles](https://user-images.githubusercontent.com/11138870/111445449-79f70d00-871c-11eb-8bc0-56c843f30f6c.png)
 
