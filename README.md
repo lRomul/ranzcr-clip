@@ -14,8 +14,10 @@ Key points:
 
 ## Experiments
 
-The progress of the solution during the competition can be seen in the [laboratory journal](https://docs.google.com/spreadsheets/d/112wrfuQjNXEFyqQLVhu79Vf0uOabnZ1MaayEts2Gvto/edit?usp=sharing).
+The progress of the solution during the competition can be seen in the laboratory journal.
 It describes all the single models and ensembles and shows CV, Public/Private LB scores.
+
+Link: https://docs.google.com/spreadsheets/d/112wrfuQjNXEFyqQLVhu79Vf0uOabnZ1MaayEts2Gvto/edit?usp=sharing
 
 Experiments:
 ![experiments](https://user-images.githubusercontent.com/11138870/111452823-f3462e00-8723-11eb-8df1-cb2fc6b17806.png)
