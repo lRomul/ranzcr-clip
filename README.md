@@ -20,9 +20,9 @@ It describes all the single models and ensembles and shows CV, Public/Private LB
 Link: https://docs.google.com/spreadsheets/d/112wrfuQjNXEFyqQLVhu79Vf0uOabnZ1MaayEts2Gvto/edit?usp=sharing
 
 Experiments:
-![experiments](https://user-images.githubusercontent.com/11138870/111452823-f3462e00-8723-11eb-8df1-cb2fc6b17806.png)
+![experiments](https://user-images.githubusercontent.com/11138870/111454092-51bfdc00-8725-11eb-9fa4-2657868a33ce.png)
 Ensembles:
-![ensembles](https://user-images.githubusercontent.com/11138870/111445449-79f70d00-871c-11eb-8bc0-56c843f30f6c.png)
+![ensembles](https://user-images.githubusercontent.com/11138870/111454119-597f8080-8725-11eb-9f9d-f09bac5c0cd8.png)
 
 ## Quick setup and start 
 
