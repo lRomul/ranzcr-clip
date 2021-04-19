@@ -1,2 +1,2 @@
 git+https://github.com/rwightman/pytorch-image-models.git@48371a33b11fc30ca23ed8988619af08902b215b
-pytorch-argus==0.2.0
+pytorch-argus==0.2.1
